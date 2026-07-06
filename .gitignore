@@ -31,7 +31,11 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# IDE
+.idea/
 
 # typescript
 *.tsbuildinfo
@@ -41,3 +45,7 @@ example
 # generated native folders
 /ios
 /android
+
+# 로컬 문서 (커밋 제외)
+onttang_PRD_v1.md
+design_handoff_onttang/
