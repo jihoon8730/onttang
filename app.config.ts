@@ -18,7 +18,20 @@ const config: ExpoConfig = {
   },
   android: {
     package: "com.jihoon8730.onttang",
-
+    intentFilters: [
+      {
+        action: "VIEW",
+        autoVerify: true,
+        data: [
+          {
+            scheme: "https",
+            host: "onttang8730.ngrok.io",
+            pathPrefix: "/oauth",
+          },
+        ],
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+    ],
     adaptiveIcon: {
       backgroundColor: "#E6F4FE",
       foregroundImage: "./assets/images/android-icon-foreground.png",
