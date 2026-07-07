@@ -1,10 +1,11 @@
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { fetchAttractionDetail, fetchAttractions } from "@/lib/api";
-import { extractHref } from "@/lib/utils";
+import { extractHref, formatInfoText } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -21,6 +22,7 @@ import Carousel, { Pagination } from "react-native-reanimated-carousel";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AttractionDetail() {
+  // usehook
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -117,17 +119,37 @@ export default function AttractionDetail() {
           ) : null}
 
           {isLoading ? (
-            <ActivityIndicator style={{ marginTop: spacing.xl }} />
+            <ActivityIndicator
+              style={{ marginTop: 120 }}
+              size={"large"}
+              color={colors.accent}
+            />
           ) : (
             <>
+              {!!(
+                detail?.usetime ||
+                detail?.restdate ||
+                detail?.infocenter ||
+                detail?.parking
+              ) && (
+                <View style={styles.useTimeView}>
+                  {detail?.usetime ? (
+                    <InfoRow label="이용시간" value={detail.usetime} />
+                  ) : null}
+                  {detail?.restdate ? (
+                    <InfoRow label="휴무일" value={detail.restdate} />
+                  ) : null}
+                  {detail?.infocenter ? (
+                    <InfoRow label="문의" value={detail.infocenter} />
+                  ) : null}
+                  {detail?.parking ? (
+                    <InfoRow label="주차" value={detail.parking} />
+                  ) : null}
+                </View>
+              )}
               {detail?.overview ? (
                 <Text style={styles.overview}>{detail.overview}</Text>
               ) : null}
-
-              {detail?.usetime ? <Text>{detail?.usetime}</Text> : null}
-              {detail?.restdate ? <Text>{detail?.restdate}</Text> : null}
-              {detail?.infocenter ? <Text>{detail?.infocenter}</Text> : null}
-              {detail?.parking ? <Text>{detail?.parking}</Text> : null}
 
               {homepageUrl ? (
                 <Pressable
@@ -142,6 +164,35 @@ export default function AttractionDetail() {
           )}
         </View>
       </ScrollView>
+    </View>
+  );
+}
+
+// 운영 정보 한 줄 (라벨 + 값). 값이 길면 2줄로 접고 "더보기"로 펼침.
+function InfoRow({ label, value }: { label: string; value: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const text = formatInfoText(value);
+  // 여러 줄(구간·개행)이거나 긴 텍스트일 때만 접기/더보기 노출
+  const collapsible = text.includes("\n") || text.length > 45;
+
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <View style={styles.infoValueWrap}>
+        <Text
+          style={styles.infoValue}
+          numberOfLines={collapsible && !expanded ? 2 : undefined}
+        >
+          {text}
+        </Text>
+        {collapsible ? (
+          <Pressable onPress={() => setExpanded((prev) => !prev)} hitSlop={6}>
+            <Text style={styles.moreButton}>
+              {expanded ? "접기" : "더보기"}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -216,5 +267,37 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     marginTop: -2,
     marginRight: 2,
+  },
+  useTimeView: {
+    gap: spacing.sm,
+    backgroundColor: colors.accentSoft,
+    borderRadius: radius.card,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  infoLabel: {
+    ...typography.meta,
+    color: colors.accent,
+    width: 56,
+    paddingTop: 1,
+  },
+  infoValueWrap: {
+    flex: 1,
+    minWidth: 0, // 콘텐츠보다 작게 줄어들 수 있게 → 텍스트가 카드 안에서 줄바꿈됨
+    gap: 2,
+  },
+  infoValue: {
+    ...typography.body,
+    color: colors.ink,
+  },
+  moreButton: {
+    ...typography.meta,
+    color: colors.accent,
+    fontWeight: "700",
   },
 });

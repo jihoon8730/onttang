@@ -33,6 +33,15 @@ export const shadow = {
   buttonPressed: "0 4px 0 #b8431f",
 } as const;
 
+// 폰트 사이즈 토큰 (typography 프리셋과 동일 스케일)
+export const fontSize = {
+  xs: 11, // chip
+  sm: 12, // meta
+  md: 14, // body
+  lg: 18, // header
+  xl: 21, // title
+} as const;
+
 // 타이포 프리셋 (Pretendard 스케일)
 export const typography = {
   title: { fontSize: 21, fontWeight: "800" },
