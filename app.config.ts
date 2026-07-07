@@ -10,7 +10,6 @@ const config: ExpoConfig = {
   scheme: "onttang",
   userInterfaceStyle: "automatic",
   ios: {
-    icon: "./assets/expo.icon",
     bundleIdentifier: "com.jihoon8730.onttang",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -51,10 +50,8 @@ const config: ExpoConfig = {
       "expo-splash-screen",
       {
         backgroundColor: "#208AEF",
-        android: {
-          image: "./assets/images/splash-icon.png",
-          imageWidth: 76,
-        },
+        image: "./assets/images/splash-icon.png",
+        imageWidth: 76,
       },
     ],
     [

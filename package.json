@@ -45,6 +45,7 @@
   },
   "scripts": {
     "start": "expo start",
+    "dev:tunnel": "EXPO_TUNNEL_SUBDOMAIN=onttang8730 expo start --tunnel",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
