@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "3KX2859976.com.jihoon8730.onttang",
+        "paths": ["/oauth/*"]
+      }
+    ]
+  }
+}

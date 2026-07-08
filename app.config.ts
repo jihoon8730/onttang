@@ -11,6 +11,7 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   ios: {
     bundleIdentifier: "com.jihoon8730.onttang",
+    associatedDomains: ["applinks:onttang8730.ngrok.io"],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
