@@ -1,3 +1,4 @@
+import { API_URL } from "@/constants/config";
 import { useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect } from "react";
@@ -8,10 +9,29 @@ export default function KakaoCallback() {
   const { code } = useLocalSearchParams<{ code?: string }>();
 
   useEffect(() => {
-    WebBrowser.dismissBrowser(); // 카카오 로그인 브라우저 닫기
-    console.log("카카오 code:", code);
-    // TODO(③): 이 code를 백엔드로 → JWT 발급 → 저장 → 메인으로 이동
-    // router.replace("/(tabs)/territory");
+    if (!code) return; // code 없으면 아무것도 안 함
+
+    async function sendCode() {
+      try {
+        WebBrowser.dismissBrowser(); // 카카오 로그인 브라우저 닫기
+        console.log("카카오 code:", code);
+
+        const res = await fetch(`${API_URL}/auth/kakao`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        console.log("2응답 status:", res.status);
+        const data = await res.json();
+        console.log("백엔드 응답:", data);
+
+        // router.replace("/(tabs)/territory");
+      } catch (e) {
+        console.log("로그인 요청 에러:", e);
+      }
+    }
+
+    sendCode();
   }, [code]);
 
   return (
