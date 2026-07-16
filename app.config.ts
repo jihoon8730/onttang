@@ -11,27 +11,12 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   ios: {
     bundleIdentifier: "com.jihoon8730.onttang",
-    associatedDomains: ["applinks:onttang8730.ngrok.io"],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
   },
   android: {
     package: "com.jihoon8730.onttang",
-    intentFilters: [
-      {
-        action: "VIEW",
-        autoVerify: true,
-        data: [
-          {
-            scheme: "https",
-            host: "onttang8730.ngrok.io",
-            pathPrefix: "/oauth",
-          },
-        ],
-        category: ["BROWSABLE", "DEFAULT"],
-      },
-    ],
     adaptiveIcon: {
       backgroundColor: "#E6F4FE",
       foregroundImage: "./assets/images/android-icon-foreground.png",
