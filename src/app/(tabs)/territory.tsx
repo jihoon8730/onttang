@@ -11,7 +11,7 @@ const discovery = {
   tokenEndpoint: "https://kauth.kakao.com/oauth/token",
 };
 
-const KAKAO_REST_KEY = "f7e7cb7e5451452f6be83f1d5e2066b9";
+const KAKAO_REST_KEY = process.env.EXPO_PUBLIC_KAKAO_REST_KEY!;
 const KAKAO_REDIRECT_URI = "http://localhost:8081/kakao-bridge.html";
 
 export default function Territory() {
