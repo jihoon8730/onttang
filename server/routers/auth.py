@@ -1,10 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from services.kakao import exchange_code, get_kakao_user
 from models import User
 from database import SessionLocal
 from sqlalchemy import select
-from security import create_access_token
+from security import create_access_token, decode_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,3 +38,19 @@ async def kakao_login(body: KakaoLoginIn):
         session.commit()
         token = create_access_token(user.id)  # JWT 발급
         return {"token": token, "user": {"id": user.id, "nickname": user.nickname}}
+
+bearer = HTTPBearer()
+
+def get_current_user_id(cred: HTTPAuthorizationCredentials = Depends(bearer)) -> int:
+    try:
+        return decode_access_token(cred.credentials)
+    except Exception:
+        raise HTTPException(status_code=401, detail="유효하지 않은 토큰")
+    
+@router.get("/me")
+def me(user_id: int = Depends(get_current_user_id)):
+    with SessionLocal() as session:
+        user = session.get(User, user_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="유저 없음")
+        return {"id": user.id, "nickname": user.nickname}

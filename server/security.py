@@ -11,3 +11,8 @@ def create_access_token(user_id: int) -> str:
         "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRE_DAYS),
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm=JWT_ALGORITHM)
+
+def decode_access_token(token:str) -> int:
+    # JWT 검증 후 유지 id(sub) 반환 위조 만료면 예외 발생
+    payload = jwt.decode(token, settings.jwt_secret, algorithms=[JWT_ALGORITHM])
+    return int(payload["sub"])

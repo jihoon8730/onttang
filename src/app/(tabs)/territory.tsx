@@ -11,7 +11,7 @@ const discovery = {
   tokenEndpoint: "https://kauth.kakao.com/oauth/token",
 };
 
-const KAKAO_REST_KEY = process.env.EXPO_PUBLIC_KAKAO_REST_KEY!;
+const KAKAO_REST_KEY = "f7e7cb7e5451452f6be83f1d5e2066b9";
 const KAKAO_REDIRECT_URI = "http://localhost:8081/kakao-bridge.html";
 
 export default function Territory() {
@@ -60,6 +60,15 @@ export default function Territory() {
     setToken(null);
   }
 
+  async function fetchMe() {
+    const res = await fetch(`${API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }, // ← 팔찌를 헤더에 붙임
+    });
+    console.log("내 정보 status:", res.status);
+    const data = await res.json();
+    console.log("내 정보:", data);
+  }
+
   return (
     <View style={styles.container}>
       {token ? (
@@ -67,6 +76,9 @@ export default function Territory() {
           <Text style={styles.text}>로그인됨 🎉</Text>
           <Pressable onPress={logout} style={styles.button}>
             <Text style={styles.buttonText}>로그아웃</Text>
+          </Pressable>
+          <Pressable onPress={fetchMe} style={styles.button}>
+            <Text style={styles.buttonText}>내 정보 확인</Text>
           </Pressable>
         </>
       ) : (
