@@ -1,4 +1,4 @@
-import { API_URL } from "@/constants/config";
+import { API_URL, DEV_HOST } from "@/constants/config";
 import { AuthRequest, makeRedirectUri } from "expo-auth-session";
 import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
@@ -12,7 +12,7 @@ const discovery = {
 };
 
 const KAKAO_REST_KEY = "f7e7cb7e5451452f6be83f1d5e2066b9";
-const KAKAO_REDIRECT_URI = "http://localhost:8081/kakao-bridge.html";
+const KAKAO_REDIRECT_URI = `http://${DEV_HOST}:8081/kakao-bridge.html`;
 
 export default function Territory() {
   const [token, setToken] = useState<string | null>(null);

@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     database_url: str
     kakao_rest_key: str
     kakao_client_secret: str
+    kakao_redirect_uri: str
     jwt_secret: str
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

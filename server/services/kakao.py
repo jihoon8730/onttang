@@ -3,8 +3,7 @@ from config import settings
 
 KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token"
 KAKAO_USER_URL = "https://kapi.kakao.com/v2/user/me"
-# 리다이렉트 주소 동일
-REDIRECT_URI = "http://localhost:8081/kakao-bridge.html"
+REDIRECT_URI = settings.kakao_redirect_uri
 
 async def exchange_code(code:str) -> str:
     """인가코드 -> access_token으로 교환"""
