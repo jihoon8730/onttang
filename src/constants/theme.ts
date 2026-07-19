@@ -33,6 +33,15 @@ export const shadow = {
   buttonPressed: "0 4px 0 #b8431f",
 } as const;
 
+// 지도 위 카드/버튼 그림자 (RN shadow* + Android elevation)
+export const cardShadow = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.14,
+  shadowRadius: 12,
+  elevation: 5,
+} as const;
+
 // 폰트 사이즈 토큰 (typography 프리셋과 동일 스케일)
 export const fontSize = {
   xs: 11, // chip

@@ -1,6 +1,9 @@
-import AttractionListItem from "@/components/attraction-list-item";
-import AttractionMarker from "@/components/attraction-marker";
+import AttractionListItem from "@/components/map/attraction-list-item";
+import AttractionMarker from "@/components/map/attraction-marker";
+import MapSearchOverlay from "@/components/map/map-search-overlay";
+import MyLocationButton from "@/components/map/my-location-button";
 import { colors, spacing, typography } from "@/constants/theme";
+import { useMyLocation } from "@/hooks/use-my-location";
 import { fetchAttractions } from "@/lib/api";
 import { useFilterStore } from "@/stores/use-filter-store";
 import { Attraction } from "@/types/attraction";
@@ -14,22 +17,15 @@ import {
 } from "@mj-studio/react-native-naver-map";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
-import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { SymbolView } from "expo-symbols";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Keyboard,
-  Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Region = {
   latitude: number;
@@ -48,20 +44,18 @@ const INITIAL_CAMERA = {
 const FOCUS_ZOOM = 15;
 const FOCUS_DURATION = 1000;
 
-// 바텀시트 (접힘 peek / 펼침 full 2단계 — 중간 스냅 제거로 45%에서 바닥 안 보이던 문제 해결)
-// peek 35% (검색바+헤더+항목 2~3개 노출), full 80%에서 리스트 전체 스크롤
+// 바텀시트 스크롤 영역
 const SHEET_SNAP_POINTS = ["35%", "80%"];
 const SHEET_SNAP_RATIOS = [0.35, 0.8]; // SNAP_POINTS와 1:1 대응 (mapPadding 계산용)
-const SHEET_INITIAL_INDEX = 0; // 접힘(peek)으로 시작 → 지도가 메인
+const SHEET_INITIAL_INDEX = 0; // 접힘으로 시작
 const SHEET_ANIM_DURATION = 500;
 const LIST_BOTTOM_PADDING = 90;
-// mapPadding이 화면을 너무 밀어 올리지 않도록 상한 (80%까지 열면 지도가 과하게 밀림)
+// mapPadding이 화면을 너무 밀어 올리지 않도록
 const MAP_PADDING_MAX_RATIO = 0.45;
 
 export default function Index() {
   // --- 외부 훅 ---
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { height: screenH } = useWindowDimensions();
   const BottomSheetScrollable = useBottomSheetScrollableCreator();
   const animationConfigs = useBottomSheetTimingConfigs({
@@ -80,30 +74,14 @@ export default function Index() {
   const mapRef = useRef<NaverMapViewRef>(null);
   const sheetRef = useRef<BottomSheet>(null);
   const listRef = useRef<FlashListRef<Attraction>>(null);
-  const locationSub = useRef<Location.LocationSubscription | null>(null);
 
   // --- 로컬 상태 ---
   const [selectedId, setSelectedId] = useState<string>("");
   const [region, setRegion] = useState<Region | null>(null);
   const [sheetIndex, setSheetIndex] = useState(SHEET_INITIAL_INDEX);
-  const [myLocation, setMyLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-  const [pulseRadius, setPulseRadius] = useState(20);
 
-  useEffect(() => {
-    return () => {
-      locationSub.current?.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setPulseRadius((r) => (r >= 20 ? 5 : r + 1));
-    }, 60);
-    return () => clearInterval(id);
-  }, []);
+  // --- 내 위치 (커스텀 훅) ---
+  const { myLocation, pulseRadius, showMyLocation } = useMyLocation(mapRef);
 
   // --- 서버 데이터 ---
   const {
@@ -196,35 +174,6 @@ export default function Index() {
     [selectedId, focusAttraction, openDetail],
   );
 
-  // 내 위치 가져오기 + 위치 권한 요청
-  const showMyLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-
-    if (status !== "granted") return;
-
-    const loc = await Location.getCurrentPositionAsync();
-    const coords = {
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-    };
-    setMyLocation(coords);
-
-    mapRef.current?.animateCameraTo({ ...coords, zoom: 15 });
-
-    locationSub.current = await Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.High,
-        distanceInterval: 1,
-      },
-      (loc) => {
-        setMyLocation({
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        });
-      },
-    );
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.mapSection}>
@@ -256,24 +205,7 @@ export default function Index() {
         </NaverMapView>
       </View>
 
-      <Pressable
-        onPress={showMyLocation}
-        style={{
-          position: "absolute",
-          right: 12,
-          top: 350,
-          backgroundColor: colors.white,
-          padding: 8,
-          borderRadius: 24,
-          ...cardShadow,
-        }}
-      >
-        <SymbolView
-          name={{ ios: "dot.scope", android: "gps_fixed" }}
-          size={28}
-          tintColor={colors.ink}
-        />
-      </Pressable>
+      <MyLocationButton onPress={showMyLocation} />
 
       <BottomSheet
         ref={sheetRef}
@@ -301,74 +233,13 @@ export default function Index() {
         />
       </BottomSheet>
 
-      {/* 지도 위 상단 플로팅: 검색바 + 카테고리 칩 */}
-      <View
-        style={[styles.topOverlay, { top: insets.top + spacing.sm }]}
-        pointerEvents="box-none"
-      >
-        <View style={styles.searchField}>
-          <TextInput
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="관광지 검색"
-            placeholderTextColor={colors.muted}
-            underlineColorAndroid="transparent"
-            returnKeyType="search"
-            onSubmitEditing={() => Keyboard.dismiss()}
-          />
-          {isSearching && (
-            <Pressable
-              onPress={() => setSearchQuery("")}
-              hitSlop={8}
-              style={styles.searchClear}
-            >
-              <Text style={styles.searchClearText}>✕</Text>
-            </Pressable>
-          )}
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          style={styles.chipScroll}
-          contentContainerStyle={styles.chipRow}
-        >
-          <Pressable
-            onPress={() => setSelectedCategory(null)}
-            style={[
-              styles.chip,
-              selectedCategory === null && styles.chipActive,
-            ]}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                selectedCategory === null && styles.chipTextActive,
-              ]}
-            >
-              전체
-            </Text>
-          </Pressable>
-          {categories.map((c) => {
-            const active = selectedCategory === c;
-            return (
-              <Pressable
-                key={c}
-                onPress={() => setSelectedCategory(c)}
-                style={[styles.chip, active && styles.chipActive]}
-              >
-                <Text
-                  style={[styles.chipText, active && styles.chipTextActive]}
-                >
-                  {c}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </View>
+      <MapSearchOverlay
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+      />
 
       {isLoading && (
         <View style={styles.overlay}>
@@ -384,15 +255,6 @@ export default function Index() {
   );
 }
 
-// 지도 위에 뜨는 카드/칩 그림자 (iOS shadow* + Android elevation)
-const cardShadow = {
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.14,
-  shadowRadius: 12,
-  elevation: 5,
-} as const;
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   mapSection: { flex: 1 },
@@ -407,69 +269,5 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
     justifyContent: "center",
-  },
-  topOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-  },
-  searchField: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    paddingHorizontal: spacing.lg,
-    ...cardShadow,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.ink,
-    paddingVertical: spacing.md,
-  },
-  searchClear: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.muted,
-  },
-  searchClearText: {
-    color: colors.white,
-    fontSize: 11,
-    fontWeight: "700",
-    lineHeight: 13,
-  },
-  chipScroll: {
-    flexGrow: 0,
-    overflow: "visible",
-  },
-  chipRow: {
-    gap: spacing.sm,
-    paddingVertical: spacing.xs,
-    paddingRight: spacing.lg,
-  },
-  chip: {
-    backgroundColor: colors.white,
-    borderRadius: 999,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    ...cardShadow,
-  },
-  chipActive: {
-    backgroundColor: colors.accent,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.ink,
-  },
-  chipTextActive: {
-    color: colors.white,
   },
 });
