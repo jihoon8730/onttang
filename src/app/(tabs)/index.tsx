@@ -16,6 +16,7 @@ import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
+import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -255,6 +256,25 @@ export default function Index() {
         </NaverMapView>
       </View>
 
+      <Pressable
+        onPress={showMyLocation}
+        style={{
+          position: "absolute",
+          right: 12,
+          top: 350,
+          backgroundColor: colors.white,
+          padding: 8,
+          borderRadius: 24,
+          ...cardShadow,
+        }}
+      >
+        <SymbolView
+          name={{ ios: "dot.scope", android: "gps_fixed" }}
+          size={28}
+          tintColor={colors.ink}
+        />
+      </Pressable>
+
       <BottomSheet
         ref={sheetRef}
         index={SHEET_INITIAL_INDEX}
@@ -349,21 +369,6 @@ export default function Index() {
           })}
         </ScrollView>
       </View>
-
-      <Pressable
-        onPress={showMyLocation}
-        style={{
-          position: "absolute",
-          right: 16,
-          bottom: 300,
-          backgroundColor: colors.white,
-          padding: 12,
-          borderRadius: 24,
-          ...cardShadow,
-        }}
-      >
-        <Text>📍</Text>
-      </Pressable>
 
       {isLoading && (
         <View style={styles.overlay}>
