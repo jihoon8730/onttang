@@ -1,10 +1,13 @@
+import { API_URL } from "@/constants/config";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { fetchAttractionDetail, fetchAttractions } from "@/lib/api";
 import { extractHref, formatInfoText } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { Image } from "expo-image";
+import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -82,6 +85,38 @@ export default function AttractionDetail() {
 
   const homepageUrl = detail?.homepage ? extractHref(detail.homepage) : null;
 
+  const stampHere = async () => {
+    const token = await SecureStore.getItemAsync("token");
+    if (!token) {
+      console.log("로그인이 필요해요");
+      return;
+    }
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      console.log("위치 권한이 필요해요");
+      return;
+    }
+
+    const loc = await Location.getCurrentPositionAsync();
+
+    const res = await fetch(`${API_URL}/stamps`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        content_id: id,
+        lat: loc.coords.latitude,
+        lng: loc.coords.longitude,
+      }),
+    });
+    console.log("스탬프 status:", res.status);
+    const data = await res.json();
+    console.log("스탬프 결과", data);
+  };
+
   return (
     <View style={styles.container}>
       {backButton}
@@ -117,6 +152,23 @@ export default function AttractionDetail() {
           {attraction.address ? (
             <Text style={styles.address}>{attraction.address}</Text>
           ) : null}
+
+          <Pressable
+            onPress={stampHere}
+            style={{
+              backgroundColor: colors.accent,
+              paddingVertical: 14,
+              borderRadius: 12,
+              alignItems: "center",
+              marginTop: spacing.lg,
+            }}
+          >
+            <Text
+              style={{ color: colors.white, fontWeight: "700", fontSize: 15 }}
+            >
+              여기 찍기
+            </Text>
+          </Pressable>
 
           {isLoading ? (
             <ActivityIndicator
