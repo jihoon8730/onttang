@@ -1,7 +1,7 @@
 import { API_URL } from "@/constants/config";
 import { colors, spacing } from "@/constants/theme";
+import { useAuthStore } from "@/stores/use-auth-store";
 import * as Location from "expo-location";
-import * as SecureStore from "expo-secure-store";
 import { Pressable, StyleSheet, Text } from "react-native";
 
 type Props = {
@@ -10,8 +10,8 @@ type Props = {
 
 // "여기 찍기" — 현재 위치를 담아 스탬프 요청 (로그인 필요 · 서버가 반경 검증)
 export default function StampButton({ contentId }: Props) {
+  const token = useAuthStore((s) => s.token);
   const stampHere = async () => {
-    const token = await SecureStore.getItemAsync("token");
     if (!token) {
       console.log("로그인이 필요해요");
       return;

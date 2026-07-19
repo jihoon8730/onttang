@@ -1,8 +1,7 @@
 import { API_URL, DEV_HOST } from "@/constants/config";
+import { useAuthStore } from "@/stores/use-auth-store";
 import { AuthRequest, makeRedirectUri } from "expo-auth-session";
-import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
-import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 //카카오 인증서버 주소록
@@ -15,11 +14,10 @@ const KAKAO_REST_KEY = "f7e7cb7e5451452f6be83f1d5e2066b9";
 const KAKAO_REDIRECT_URI = `http://${DEV_HOST}:8081/kakao-bridge.html`;
 
 export default function Territory() {
-  const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    SecureStore.getItemAsync("token").then(setToken);
-  }, []);
+  const token = useAuthStore((s) => s.token);
+  const user = useAuthStore((s) => s.user);
+  const login = useAuthStore((s) => s.login);
+  const logout = useAuthStore((s) => s.logout);
 
   const redirectUri = makeRedirectUri({
     scheme: "onttang", // 앱 스키마
@@ -51,13 +49,7 @@ export default function Territory() {
       body: JSON.stringify({ code }),
     });
     const data = await res.json();
-    await SecureStore.setItemAsync("token", data.token);
-    setToken(data.token);
-  }
-
-  async function logout() {
-    await SecureStore.deleteItemAsync("token");
-    setToken(null);
+    await login(data.token, data.user);
   }
 
   async function fetchMe() {
