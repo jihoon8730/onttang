@@ -34,6 +34,12 @@ const config: ExpoConfig = {
     "expo-router",
     "expo-secure-store",
     [
+      "expo-location",
+      {
+        locationWhenInUsePermission: "현재 위치를 지도에 표시하는 데 사용해요",
+      },
+    ],
+    [
       "expo-splash-screen",
       {
         backgroundColor: "#FF993B",

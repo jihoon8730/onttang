@@ -14,8 +14,9 @@ import {
 } from "@mj-studio/react-native-naver-map";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
@@ -78,11 +79,30 @@ export default function Index() {
   const mapRef = useRef<NaverMapViewRef>(null);
   const sheetRef = useRef<BottomSheet>(null);
   const listRef = useRef<FlashListRef<Attraction>>(null);
+  const locationSub = useRef<Location.LocationSubscription | null>(null);
 
   // --- 로컬 상태 ---
   const [selectedId, setSelectedId] = useState<string>("");
   const [region, setRegion] = useState<Region | null>(null);
   const [sheetIndex, setSheetIndex] = useState(SHEET_INITIAL_INDEX);
+  const [myLocation, setMyLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [pulseRadius, setPulseRadius] = useState(20);
+
+  useEffect(() => {
+    return () => {
+      locationSub.current?.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPulseRadius((r) => (r >= 20 ? 5 : r + 1));
+    }, 60);
+    return () => clearInterval(id);
+  }, []);
 
   // --- 서버 데이터 ---
   const {
@@ -175,6 +195,35 @@ export default function Index() {
     [selectedId, focusAttraction, openDetail],
   );
 
+  // 내 위치 가져오기 + 위치 권한 요청
+  const showMyLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status !== "granted") return;
+
+    const loc = await Location.getCurrentPositionAsync();
+    const coords = {
+      latitude: loc.coords.latitude,
+      longitude: loc.coords.longitude,
+    };
+    setMyLocation(coords);
+
+    mapRef.current?.animateCameraTo({ ...coords, zoom: 15 });
+
+    locationSub.current = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        distanceInterval: 1,
+      },
+      (loc) => {
+        setMyLocation({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+      },
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.mapSection}>
@@ -188,6 +237,12 @@ export default function Index() {
             listRef.current?.scrollToTop({ animated: false });
           }}
           locale="ko"
+          locationOverlay={{
+            isVisible: myLocation !== null,
+            position: myLocation ?? INITIAL_CAMERA,
+            circleRadius: pulseRadius,
+            circleColor: "#4285F433",
+          }}
         >
           {visibleAttractions.map((a) => (
             <AttractionMarker
@@ -294,6 +349,21 @@ export default function Index() {
           })}
         </ScrollView>
       </View>
+
+      <Pressable
+        onPress={showMyLocation}
+        style={{
+          position: "absolute",
+          right: 16,
+          bottom: 300,
+          backgroundColor: colors.white,
+          padding: 12,
+          borderRadius: 24,
+          ...cardShadow,
+        }}
+      >
+        <Text>📍</Text>
+      </Pressable>
 
       {isLoading && (
         <View style={styles.overlay}>
