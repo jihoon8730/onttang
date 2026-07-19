@@ -1,7 +1,7 @@
 import type { TextStyle } from "react-native";
 // 색상 토큰
 export const colors = {
-  accent: "#E8643C", // 점령/CTA/브랜드
+  accent: "#E8643C", // 스탬프·CTA·브랜드
   accentDark: "#b8431f", // 버튼 눌림 그림자
   accentSoft: "#fdeee7", // 선택 행 배경
   ink: "#2b2b2b", // 본문

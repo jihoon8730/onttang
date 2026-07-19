@@ -174,7 +174,7 @@ export default function Index() {
         attraction={item}
         selected={item.content_id === selectedId}
         onPress={focusAttraction}
-        onOccupy={openDetail}
+        onExplore={openDetail}
       />
     ),
     [selectedId, focusAttraction, openDetail],

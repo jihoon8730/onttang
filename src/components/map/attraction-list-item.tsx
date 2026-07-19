@@ -8,14 +8,14 @@ type Props = {
   attraction: Attraction;
   selected: boolean;
   onPress: (attraction: Attraction) => void;
-  onOccupy: (attraction: Attraction) => void;
+  onExplore: (attraction: Attraction) => void;
 };
 
 function AttractionListItem({
   attraction,
   selected,
   onPress,
-  onOccupy,
+  onExplore,
 }: Props) {
   return (
     <Pressable
@@ -41,8 +41,8 @@ function AttractionListItem({
         </View>
       </View>
 
-      <Pressable style={styles.button} onPress={() => onOccupy(attraction)}>
-        <Text style={styles.buttonText}>점령하기</Text>
+      <Pressable style={styles.button} onPress={() => onExplore(attraction)}>
+        <Text style={styles.buttonText}>탐험하기</Text>
       </Pressable>
     </Pressable>
   );
