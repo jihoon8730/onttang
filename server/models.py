@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import UniqueConstraint, func
+from sqlalchemy import UniqueConstraint, func, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
@@ -31,4 +31,15 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     __table_args__ = (UniqueConstraint("provider", "provider_user_id"),)
-    
+
+class Stamp(Base):
+    __tablename__ = "stamps"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id")) 
+    content_id: Mapped[str] = mapped_column(ForeignKey("attractions.content_id")) # 장소
+    visit_count: Mapped[str] = mapped_column(server_default="1") # 방문 횟수
+    stamped_at: Mapped[datetime] = mapped_column(server_default=func.now()) # 처음 찍은 시각
+
+    # 한 유저는 한 관광지에 스탬프는 1개 (재방문 visit_count는 증가)
+    __table_args__ = (UniqueConstraint("user_id", "content_id"),)

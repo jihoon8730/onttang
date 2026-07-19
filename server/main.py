@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from models import Base
 from database import engine
-from routers import attractions, auth
+from routers import attractions, auth, stamps
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -13,3 +13,4 @@ def read_root():
 
 app.include_router(attractions.router)
 app.include_router(auth.router)
+app.include_router(stamps.router)
