@@ -1,60 +1,34 @@
 import { cardShadow, colors, spacing } from "@/constants/theme";
-import {
-  Keyboard,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useRouter } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
   categories: string[];
   selectedCategory: string | null;
   setSelectedCategory: (c: string | null) => void;
 };
 
-// 지도 상단 플로팅: 검색바 + 카테고리 칩
+// 지도 상단 플로팅: 검색바(탭 → 검색 스크린) + 카테고리 칩
 export default function MapSearchOverlay({
-  searchQuery,
-  setSearchQuery,
   categories,
   selectedCategory,
   setSelectedCategory,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const isSearching = searchQuery.trim() !== "";
+  const router = useRouter();
 
   return (
     <View
       style={[styles.topOverlay, { top: insets.top + spacing.sm }]}
       pointerEvents="box-none"
     >
-      <View style={styles.searchField}>
-        <TextInput
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="관광지 검색"
-          placeholderTextColor={colors.muted}
-          underlineColorAndroid="transparent"
-          returnKeyType="search"
-          onSubmitEditing={() => Keyboard.dismiss()}
-        />
-        {isSearching && (
-          <Pressable
-            onPress={() => setSearchQuery("")}
-            hitSlop={8}
-            style={styles.searchClear}
-          >
-            <Text style={styles.searchClearText}>✕</Text>
-          </Pressable>
-        )}
-      </View>
+      <Pressable
+        style={styles.searchField}
+        onPress={() => router.push("/search")}
+      >
+        <Text style={styles.searchPlaceholder}>관광지 검색</Text>
+      </Pressable>
 
       <ScrollView
         horizontal
@@ -105,33 +79,15 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   searchField: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
     backgroundColor: colors.white,
     borderRadius: 14,
     paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
     ...cardShadow,
   },
-  searchInput: {
-    flex: 1,
+  searchPlaceholder: {
     fontSize: 15,
-    color: colors.ink,
-    paddingVertical: spacing.md,
-  },
-  searchClear: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.muted,
-  },
-  searchClearText: {
-    color: colors.white,
-    fontSize: 11,
-    fontWeight: "700",
-    lineHeight: 13,
+    color: colors.muted,
   },
   chipScroll: {
     flexGrow: 0,

@@ -18,7 +18,7 @@ import {
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -63,12 +63,12 @@ export default function Index() {
   });
 
   // --- 필터 상태 (Zustand) ---
-  const searchQuery = useFilterStore((state) => state.searchQuery);
   const selectedCategory = useFilterStore((state) => state.selectedCategory);
-  const setSearchQuery = useFilterStore((state) => state.setSearchQuery);
   const setSelectedCategory = useFilterStore(
     (state) => state.setSelectedCategory,
   );
+  const pendingFocusId = useFilterStore((state) => state.pendingFocusId);
+  const setPendingFocusId = useFilterStore((state) => state.setPendingFocusId);
 
   // --- refs ---
   const mapRef = useRef<NaverMapViewRef>(null);
@@ -93,19 +93,14 @@ export default function Index() {
     queryFn: fetchAttractions,
   });
 
-  // --- 파생 데이터: 필터 파이프라인 (검색·카테고리 → 지도 영역 bbox) ---
-  const filteredAttractions = useMemo(() => {
-    const filterQuery = searchQuery.trim().toLowerCase();
-
-    return attractions.filter((a) => {
-      const searchFilter =
-        a.title.toLowerCase().includes(filterQuery) ||
-        a.address?.toLowerCase().includes(filterQuery);
-      const selectedCategoryFilter =
-        a.category === selectedCategory || selectedCategory === null;
-      return searchFilter && selectedCategoryFilter;
-    });
-  }, [attractions, searchQuery, selectedCategory]);
+  // --- 파생 데이터: 카테고리 필터 → 지도 영역 bbox ---
+  const filteredAttractions = useMemo(
+    () =>
+      attractions.filter(
+        (a) => selectedCategory === null || a.category === selectedCategory,
+      ),
+    [attractions, selectedCategory],
+  );
 
   const visibleAttractions = useMemo(() => {
     if (!region) return filteredAttractions;
@@ -123,9 +118,19 @@ export default function Index() {
     );
   }, [region, filteredAttractions]);
 
-  const isSearching = searchQuery.trim() !== "";
-  // 검색 중이면 화면 밖 매치까지 전부, 아니면 지도 영역 안만
-  const listData = isSearching ? filteredAttractions : visibleAttractions;
+  // 선택된(검색으로 고른) 장소를 리스트 맨 위로
+  const listData = useMemo(() => {
+    if (!selectedId) return visibleAttractions;
+    const idx = visibleAttractions.findIndex(
+      (a) => a.content_id === selectedId,
+    );
+    if (idx <= 0) return visibleAttractions;
+    return [
+      visibleAttractions[idx],
+      ...visibleAttractions.slice(0, idx),
+      ...visibleAttractions.slice(idx + 1),
+    ];
+  }, [visibleAttractions, selectedId]);
 
   // 카테고리 칩 목록 (원본 기준 — 지도 이동에도 고정)
   const categories = useMemo(
@@ -155,6 +160,7 @@ export default function Index() {
       easing: "Fly",
     });
     setSelectedId(a.content_id);
+    sheetRef.current?.collapse(); // 장소 선택 시 시트 접어 지도 보이게
   }, []);
 
   const openDetail = useCallback(
@@ -173,6 +179,14 @@ export default function Index() {
     ),
     [selectedId, focusAttraction, openDetail],
   );
+
+  // 검색 스크린에서 고른 장소를 지도에 포커스 (돌아왔을 때 소비 후 clear)
+  useEffect(() => {
+    if (!pendingFocusId || attractions.length === 0) return;
+    const target = attractions.find((a) => a.content_id === pendingFocusId);
+    if (target) focusAttraction(target);
+    setPendingFocusId(null);
+  }, [pendingFocusId, attractions, focusAttraction, setPendingFocusId]);
 
   return (
     <View style={styles.container}>
@@ -223,7 +237,7 @@ export default function Index() {
           keyExtractor={(item) => item.content_id}
           ListHeaderComponent={
             <Text style={styles.listHeader}>
-              {isSearching ? "검색 결과" : "이 지역 관광지"} {listData.length}곳
+              이 지역 관광지 {listData.length}곳
             </Text>
           }
           renderItem={renderItem}
@@ -234,8 +248,6 @@ export default function Index() {
       </BottomSheet>
 
       <MapSearchOverlay
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
         categories={categories}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
