@@ -11,6 +11,11 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   ios: {
     bundleIdentifier: "com.jihoon8730.onttang",
+    // expo-secure-store(키체인) 접근 권한 — prebuild가 이 값을 entitlements 파일에 반영.
+    // 표준형($(AppIdentifierPrefix) 접두사)이라 실기기에서 유효.
+    entitlements: {
+      "keychain-access-groups": ["$(AppIdentifierPrefix)com.jihoon8730.onttang"],
+    },
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },

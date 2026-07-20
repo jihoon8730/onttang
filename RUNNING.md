@@ -36,23 +36,27 @@ npm start
 
 ## iOS 시뮬레이터로 실행 (맥에서 개발할 때)
 
-시뮬레이터는 실기기와 달리 **코드 서명이 필요 없습니다.** 터널도 필요 없고 `npm start`로 바로 붙습니다.
+시뮬레이터는 진짜 애플 인증서는 필요 없지만, **ad-hoc 서명은 반드시 해야 합니다.**
+터널도 필요 없고 `npm start`로 바로 붙습니다.
 
 ### 처음 한 번 — dev client 빌드 후 시뮬레이터에 설치
 
-> ⚠️ `npx expo run:ios`는 이 프로젝트 설정에서 시뮬레이터를 대상으로 해도 실기기 코드 서명을 요구해
-> `No code signing certificates are available` 에러가 납니다.
-> 시뮬레이터는 서명이 필요 없으므로 `xcodebuild`로 서명을 끄고 직접 빌드합니다.
+> ⚠️ **서명을 아예 끄면(`CODE_SIGNING_ALLOWED=NO`) 안 됩니다.**
+> 무서명 빌드는 `expo-secure-store`가 iOS 키체인에 접근할 때
+> `KeyChainException: A required entitlement isn't present` 에러를 냅니다.
+> 시뮬레이터는 진짜 인증서 없이 **ad-hoc 서명(`CODE_SIGN_IDENTITY="-"`)** 만으로 해결되니,
+> 아래처럼 서명을 켜서 빌드합니다. (`npx expo run:ios`는 실기기 서명을 요구해 시뮬레이터엔 부적합)
 
 ```bash
 # 1) 부팅된 시뮬레이터 UDID 확인 (원하는 기기의 UUID 복사)
 xcrun simctl list devices available | grep -i iphone
 
-# 2) 서명 없이 시뮬레이터용으로 빌드 (UDID는 위에서 확인한 값으로 교체)
+# 2) ad-hoc 서명으로 시뮬레이터용 빌드 (UDID는 위에서 확인한 값으로 교체)
 cd ios && xcodebuild -workspace onttang.xcworkspace -scheme onttang \
   -configuration Debug -sdk iphonesimulator \
   -destination 'id=<시뮬레이터-UDID>' \
-  -derivedDataPath build CODE_SIGNING_ALLOWED=NO && cd ..
+  -derivedDataPath build \
+  CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" && cd ..
 
 # 3) 빌드 결과물을 시뮬레이터에 설치
 xcrun simctl install <시뮬레이터-UDID> \
