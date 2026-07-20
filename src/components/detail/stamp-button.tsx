@@ -2,7 +2,8 @@ import { API_URL } from "@/constants/config";
 import { colors, spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/use-auth-store";
 import * as Location from "expo-location";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { useState } from "react";
+import { Alert, Pressable, StyleSheet, Text } from "react-native";
 
 type Props = {
   contentId: string;
@@ -11,40 +12,73 @@ type Props = {
 // "여기 찍기" — 현재 위치를 담아 스탬프 요청 (로그인 필요 · 서버가 반경 검증)
 export default function StampButton({ contentId }: Props) {
   const token = useAuthStore((s) => s.token);
+  const [loading, setLoading] = useState(false);
+
   const stampHere = async () => {
     if (!token) {
-      console.log("로그인이 필요해요");
+      Alert.alert("로그인이 필요해요", "스탬프를 찍으려면 먼저 로그인해주세요");
       return;
     }
 
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      console.log("위치 권한이 필요해요");
+      Alert.alert(
+        "위치 권한이 필요해요",
+        "현재 위치를 확인해야 스탬프를 찍을 수 있어요",
+      );
       return;
     }
 
-    const loc = await Location.getCurrentPositionAsync();
+    setLoading(true);
+    try {
+      const loc = await Location.getCurrentPositionAsync();
 
-    const res = await fetch(`${API_URL}/stamps`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        content_id: contentId,
-        lat: loc.coords.latitude,
-        lng: loc.coords.longitude,
-      }),
-    });
-    console.log("스탬프 status:", res.status);
-    const data = await res.json();
-    console.log("스탬프 결과", data);
+      const res = await fetch(`${API_URL}/stamps`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content_id: contentId,
+          lat: loc.coords.latitude,
+          lng: loc.coords.longitude,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.visit_count === 1) {
+          Alert.alert("스탬프 획득!", "이 땅이 내 영토가 되었어요");
+        } else {
+          Alert.alert(
+            "다시 방문했어요",
+            `벌써 ${data.visit_count}번째 방문이에요`,
+          );
+        }
+      } else if (res.status === 400) {
+        Alert.alert("아직 멀어요", data.detail ?? "관광지 근처에서 찍어주세요");
+      } else if (res.status === 401) {
+        Alert.alert(
+          "로그인이 필요해요",
+          "로그인이 만료됐어요 다시 로그인해주세요",
+        );
+      } else {
+        Alert.alert("잠시 후 다시 시도해주세요", "스탬프를 찍지 못했어요");
+      }
+    } catch {
+      Alert.alert("네트워크 오류", "연결을 확인하고 다시 시도해주세요");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Pressable onPress={stampHere} style={styles.button}>
-      <Text style={styles.text}>여기 찍기</Text>
+    <Pressable
+      onPress={stampHere}
+      disabled={loading}
+      style={[styles.button, loading && styles.buttonDisabled]}
+    >
+      <Text style={styles.text}>{loading ? "찍는 중…" : "여기 찍기"}</Text>
     </Pressable>
   );
 }
@@ -56,6 +90,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     marginTop: spacing.lg,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   text: {
     color: colors.white,
