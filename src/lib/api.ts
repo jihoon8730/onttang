@@ -28,6 +28,6 @@ export async function fetchMyStats(token: string): Promise<MyStats> {
   const res = await fetch(`${API_URL}/me/stats`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error("정복률 조회 실패");
+  if (!res.ok) throw new Error("탐험률 조회 실패");
   return res.json();
 }

@@ -49,7 +49,7 @@ def list_stamps(user_id: int) -> list[dict]:
 
 
 def get_stats(user_id: int) -> dict:
-    """정복률 = 내 스탬프 수 / 전체 대표 관광지 수"""
+    """탐험률 = 내 스탬프 수 / 전체 대표 관광지 수"""
     with SessionLocal() as session:
         stamped = session.scalar(
             select(func.count()).select_from(Stamp).where(Stamp.user_id == user_id)

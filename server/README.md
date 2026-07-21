@@ -75,5 +75,5 @@ database_url=...     # PostgreSQL 연결 문자열
 ## 예정 (Stage 2)
 
 - `stamps` 테이블 + 스탬프 CRUD (GPS 반경 검증)
-- 정복 현황 집계 API
+- 탐험 현황 집계 API
 - 인증(방식 재설계 대기 — 루트 PRD §16)

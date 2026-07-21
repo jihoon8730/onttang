@@ -93,11 +93,15 @@ export default function Territory() {
       {stats ? (
         <View style={styles.statsCard}>
           <Text style={styles.statsText}>
-            서울 정복 {stats.stamped} / {stats.total} (
+            전국 탐험 {stats.stamped} / {stats.total} (
             {Math.round(stats.rate * 100)}%)
           </Text>
         </View>
       ) : null}
+
+      <View style={styles.explorationRateBox}>
+        <Text>지역별 탐험률</Text>
+      </View>
 
       <FlashList
         data={stamps ?? []}
@@ -196,4 +200,9 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, gap: 2 },
   rowTitle: { ...typography.body, fontWeight: "600", color: colors.ink },
   rowMeta: { ...typography.meta, color: colors.muted },
+
+  // 지역별 탐험률
+  explorationRateBox: {
+    borderWidth: 1,
+  },
 });

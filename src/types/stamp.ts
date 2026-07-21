@@ -9,7 +9,7 @@ export type MyStamp = {
   stamped_at: string;
 };
 
-// 정복률
+// 탐험률
 export type MyStats = {
   stamped: number;
   total: number;
