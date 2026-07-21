@@ -2,9 +2,10 @@ import AttractionListItem from "@/components/map/attraction-list-item";
 import MapSearchOverlay from "@/components/map/map-search-overlay";
 import MyLocationButton from "@/components/map/my-location-button";
 import { API_URL } from "@/constants/config";
-import { colors, spacing, typography } from "@/constants/theme";
+import { colors, fontMono, spacing, typography } from "@/constants/theme";
 import { useMyLocation } from "@/hooks/use-my-location";
-import { fetchAttractions } from "@/lib/api";
+import { fetchAttractions, fetchMyStamps } from "@/lib/api";
+import { useAuthStore } from "@/stores/use-auth-store";
 import { useFilterStore } from "@/stores/use-filter-store";
 import { Attraction } from "@/types/attraction";
 import BottomSheet, {
@@ -94,6 +95,19 @@ export default function Index() {
     queryKey: ["attractions"],
     queryFn: fetchAttractions,
   });
+
+  // 내 스탬프 (로그인 시) — 지도 리스트에 "탐험함" 표시용
+  const token = useAuthStore((s) => s.token);
+  const { data: myStamps } = useQuery({
+    queryKey: ["my-stamps"],
+    queryFn: () => fetchMyStamps(token!),
+    enabled: !!token,
+  });
+  const stampMap = useMemo(() => {
+    const m = new Map<string, number>();
+    (myStamps ?? []).forEach((s) => m.set(s.content_id, s.visit_count));
+    return m;
+  }, [myStamps]);
 
   // --- 파생 데이터: 카테고리 필터 → 지도 영역 bbox ---
   const filteredAttractions = useMemo(
@@ -209,11 +223,12 @@ export default function Index() {
       <AttractionListItem
         attraction={item}
         selected={item.content_id === selectedId}
+        visitCount={stampMap.get(item.content_id)}
         onPress={focusAttraction}
         onExplore={openDetail}
       />
     ),
-    [selectedId, focusAttraction, openDetail],
+    [selectedId, stampMap, focusAttraction, openDetail],
   );
 
   // 검색 스크린에서 고른 장소를 지도에 포커스 (돌아왔을 때 소비 후 clear)
@@ -276,9 +291,11 @@ export default function Index() {
           data={listData}
           keyExtractor={(item) => item.content_id}
           ListHeaderComponent={
-            <Text style={styles.listHeader}>
-              이 지역 관광지 {listData.length}곳
-            </Text>
+            <View style={styles.sheetHead}>
+              <Text style={styles.sheetEyebrow}>이 지역</Text>
+              <Text style={styles.sheetCount}>{listData.length}</Text>
+              <Text style={styles.sheetOf}>곳</Text>
+            </View>
           }
           renderItem={renderItem}
           contentContainerStyle={{
@@ -314,7 +331,22 @@ const styles = StyleSheet.create({
   mapSection: { flex: 1 },
   map: { flex: 1 },
   list: { flex: 1, backgroundColor: colors.background },
-  listHeader: { padding: spacing.lg, ...typography.header },
+  sheetHead: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 6,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  sheetEyebrow: { ...typography.meta, color: colors.muted },
+  sheetCount: {
+    fontFamily: fontMono,
+    fontSize: 20,
+    fontWeight: "800",
+    color: colors.accent,
+  },
+  sheetOf: { ...typography.meta, color: colors.muted },
   overlay: {
     position: "absolute",
     top: 0,
