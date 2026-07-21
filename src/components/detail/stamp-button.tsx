@@ -1,6 +1,7 @@
 import { API_URL } from "@/constants/config";
 import { colors, spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/use-auth-store";
+import { useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text } from "react-native";
@@ -12,6 +13,7 @@ type Props = {
 // "여기 찍기" — 현재 위치를 담아 스탬프 요청 (로그인 필요 · 서버가 반경 검증)
 export default function StampButton({ contentId }: Props) {
   const token = useAuthStore((s) => s.token);
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
   const stampHere = async () => {
@@ -47,6 +49,9 @@ export default function StampButton({ contentId }: Props) {
       });
       const data = await res.json();
       if (res.ok) {
+        // 내 스탬프·통계 갱신 → 지도·검색·내 영토의 도장 배지·스탯 즉시 반영
+        queryClient.invalidateQueries({ queryKey: ["my-stamps"] });
+        queryClient.invalidateQueries({ queryKey: ["my-stats"] });
         if (data.visit_count === 1) {
           Alert.alert("스탬프 획득!", "이 땅이 내 영토가 되었어요");
         } else {
