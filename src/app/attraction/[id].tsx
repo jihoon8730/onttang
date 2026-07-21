@@ -78,30 +78,42 @@ export default function AttractionDetail() {
                 detail?.infocenter ||
                 detail?.parking
               ) && (
-                <View style={styles.useTimeView}>
-                  {detail?.usetime ? (
-                    <InfoRow label="이용시간" value={detail.usetime} />
-                  ) : null}
-                  {detail?.restdate ? (
-                    <InfoRow label="휴무일" value={detail.restdate} />
-                  ) : null}
-                  {detail?.infocenter ? (
-                    <InfoRow label="문의" value={detail.infocenter} />
-                  ) : null}
-                  {detail?.parking ? (
-                    <InfoRow label="주차" value={detail.parking} />
-                  ) : null}
+                <View style={styles.sectionContainer}>
+                  <Text style={styles.sectionTitle}>이용 안내</Text>
+                  <View style={styles.useTimeView}>
+                    {detail?.usetime ? (
+                      <InfoRow label="이용시간" value={detail.usetime} />
+                    ) : null}
+                    {detail?.restdate ? (
+                      <InfoRow label="휴무일" value={detail.restdate} />
+                    ) : null}
+                    {detail?.infocenter ? (
+                      <InfoRow label="문의" value={detail.infocenter} />
+                    ) : null}
+                    {detail?.parking ? (
+                      <InfoRow label="주차" value={detail.parking} />
+                    ) : null}
+                  </View>
                 </View>
               )}
+
               {detail?.overview ? (
-                <Text style={styles.overview}>{detail.overview}</Text>
+                <View style={styles.sectionContainer}>
+                  <Text style={styles.sectionTitle}>소개</Text>
+                  <Text style={styles.overview}>{detail.overview}</Text>
+                </View>
               ) : null}
 
               {homepageUrl ? (
-                <Pressable onPress={() => Linking.openURL(homepageUrl)}>
-                  <Text>{"홈페이지 방문"}</Text>
+                <Pressable
+                  style={styles.homepageButton}
+                  onPress={() => Linking.openURL(homepageUrl)}
+                >
+                  <Text style={styles.homepageButtonText}>홈페이지 방문</Text>
                 </Pressable>
               ) : null}
+              
+              <View style={styles.bottomSpacer} />
             </>
           )}
         </View>
@@ -129,13 +141,42 @@ const styles = StyleSheet.create({
     marginTop: -radius.sheet,
   },
   title: { ...typography.title, color: colors.ink },
-  address: { ...typography.meta, color: colors.muted },
-  overview: { ...typography.body, color: colors.ink, marginTop: spacing.md },
+  address: { ...typography.meta, color: colors.muted, marginBottom: spacing.md },
+  
+  sectionContainer: {
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+  },
+  sectionTitle: {
+    ...typography.header,
+    fontSize: 16,
+    color: colors.ink,
+  },
+  overview: { 
+    ...typography.body, 
+    color: colors.ink, 
+    lineHeight: 24,
+  },
   useTimeView: {
     gap: spacing.sm,
-    backgroundColor: colors.accentSoft,
+    backgroundColor: colors.chip,
     borderRadius: radius.card,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
+  },
+  homepageButton: {
+    backgroundColor: colors.chip,
+    paddingVertical: 14,
+    borderRadius: radius.button,
+    alignItems: "center",
+    marginTop: spacing.xl,
+  },
+  homepageButtonText: {
+    ...typography.body,
+    fontWeight: "700",
+    color: colors.ink,
+  },
+  bottomSpacer: {
+    height: 40,
   },
 });
