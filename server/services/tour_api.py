@@ -17,14 +17,14 @@ async def fetch_attractions(ldong_regn_cd: str = "11", page: int = 1, num_of_row
         "lDongRegnCd": ldong_regn_cd,
         "arrange": "O",
     }
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         res = await client.get(f"{TOUR_API_BASE}/areaBasedList2", params=params)
 
     data = res.json()
     if "response" not in data:  # 방어: 정상 구조인지 확인
         raise HTTPException(status_code=502, detail=f"TourAPI 응답 이상: {data}")
 
-    return data["response"]["body"]["items"].get("item", [])
+    return _items(data)  # 결과 없는 지역/페이지의 "items":"" 도 안전 처리
 
 def _items(data: dict) -> list[dict]:
     if "response" not in data:

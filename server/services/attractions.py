@@ -1,3 +1,4 @@
+import httpx
 from sqlalchemy import select
 from database import SessionLocal
 from models import Attraction
@@ -5,10 +6,10 @@ from services.tour_api import fetch_attractions
 
 NUM_OF_ROWS = 100
 
-# 17개 시도 법정동 코드
+# 시도 법정동 코드 (TourAPI lDongRegnCd 기준 — 광주+전남은 통합코드 12, 세종은 36110)
 AREA_CODES = [
-    "11", "26", "27", "28", "29", "30", "31", "36",
-    "41", "51", "43", "44", "52", "46", "47", "48", "50",
+    "11", "12", "26", "27", "28", "30", "31", "36110",
+    "41", "51", "43", "44", "52", "47", "48", "50",
 ]
 
 
@@ -26,29 +27,39 @@ async def sync_attractions(ldong_regn_cd: str = "11") -> int:
     total = 0
     with SessionLocal() as session:
         for code in codes:
-            page = 1
-            while True:
-                items = await fetch_attractions(code, page, NUM_OF_ROWS)
-                if not items:
-                    break
-                for item in items:
-                    session.merge(
-                        Attraction(
-                            content_id=item["contentid"],
-                            title=item["title"],
-                            address=item.get("addr1", ""),
-                            latitude=float(item["mapy"]),
-                            longitude=float(item["mapx"]),
-                            area_code=code,
-                            image_url=(item.get("firstimage") or "").replace("http://", "https://") or None,
-                            lcls_systm1=item.get("lclsSystm1"),
-                            lcls_systm2=item.get("lclsSystm2"),
-                            lcls_systm3=item.get("lclsSystm3"),
+            try:
+                page = 1
+                while True:
+                    items = await fetch_attractions(code, page, NUM_OF_ROWS)
+                    if not items:
+                        break
+                    for item in items:
+                        try:
+                            lat = float(item["mapy"])
+                            lng = float(item["mapx"])
+                        except (KeyError, ValueError, TypeError):
+                            continue  # 좌표 없거나 'null' 등 잘못된 항목 건너뜀
+                        session.merge(
+                            Attraction(
+                                content_id=item["contentid"],
+                                title=item["title"],
+                                address=item.get("addr1", ""),
+                                latitude=lat,
+                                longitude=lng,
+                                area_code=code,
+                                image_url=(item.get("firstimage") or "").replace("http://", "https://") or None,
+                                lcls_systm1=item.get("lclsSystm1"),
+                                lcls_systm2=item.get("lclsSystm2"),
+                                lcls_systm3=item.get("lclsSystm3"),
+                            )
                         )
-                    )
-                total += len(items)
-                if len(items) < NUM_OF_ROWS:
-                    break
-                page += 1
-        session.commit()
+                    total += len(items)
+                    if len(items) < NUM_OF_ROWS:
+                        break
+                    page += 1
+                session.commit()  # 지역 단위로 커밋 → 부분 진행 보존
+            except httpx.ReadTimeout:
+                session.rollback()
+                print(f"⚠️ {code} 지역 타임아웃 — 건너뜀 (재실행하면 채워짐)")
+                continue
     return total

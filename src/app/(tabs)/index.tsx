@@ -1,7 +1,7 @@
 import AttractionListItem from "@/components/map/attraction-list-item";
-import AttractionMarker from "@/components/map/attraction-marker";
 import MapSearchOverlay from "@/components/map/map-search-overlay";
 import MyLocationButton from "@/components/map/my-location-button";
+import { API_URL } from "@/constants/config";
 import { colors, spacing, typography } from "@/constants/theme";
 import { useMyLocation } from "@/hooks/use-my-location";
 import { fetchAttractions } from "@/lib/api";
@@ -118,6 +118,40 @@ export default function Index() {
     );
   }, [region, filteredAttractions]);
 
+  // 전국 대표를 클러스터 마커로 (네이버 SDK가 줌에 따라 자동 클러스터링)
+  const clusterMarkers = useMemo(
+    () =>
+      filteredAttractions.map((a) => {
+        const selected = a.content_id === selectedId;
+        if (a.image_url) {
+          // 관광지 사진을 원형 마커로 (백엔드가 합성 + 캐시)
+          const url = `${API_URL}/markers?src=${encodeURIComponent(a.image_url)}${
+            selected ? "&selected=true" : ""
+          }`;
+          return {
+            identifier: a.content_id,
+            latitude: a.latitude,
+            longitude: a.longitude,
+            image: { httpUri: url },
+            width: selected ? 54 : 44,
+            height: selected ? 65 : 53,
+          };
+        }
+        // 사진 없으면 브랜드 핀으로 폴백
+        return {
+          identifier: a.content_id,
+          latitude: a.latitude,
+          longitude: a.longitude,
+          image: selected
+            ? require("../../../assets/images/marker-selected.png")
+            : require("../../../assets/images/marker.png"),
+          width: selected ? 34 : 28,
+          height: selected ? 42 : 35,
+        };
+      }),
+    [filteredAttractions, selectedId],
+  );
+
   // 선택된(검색으로 고른) 장소를 리스트 맨 위로
   const listData = useMemo(() => {
     if (!selectedId) return visibleAttractions;
@@ -207,16 +241,20 @@ export default function Index() {
             circleRadius: pulseRadius,
             circleColor: "#4285F433",
           }}
-        >
-          {visibleAttractions.map((a) => (
-            <AttractionMarker
-              key={a.content_id}
-              attraction={a}
-              selected={a.content_id === selectedId}
-              onPress={focusAttraction}
-            />
-          ))}
-        </NaverMapView>
+          clusters={[
+            {
+              markers: clusterMarkers,
+              screenDistance: 70,
+              animate: true,
+            },
+          ]}
+          onTapClusterLeaf={({ markerIdentifier }) => {
+            const target = attractions.find(
+              (a) => a.content_id === markerIdentifier,
+            );
+            if (target) focusAttraction(target);
+          }}
+        />
       </View>
 
       <MyLocationButton onPress={showMyLocation} />

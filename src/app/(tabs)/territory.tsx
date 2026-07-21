@@ -2,10 +2,13 @@ import { API_URL, DEV_HOST } from "@/constants/config";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { fetchMyStamps, fetchMyStats } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
+import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { AuthRequest, makeRedirectUri } from "expo-auth-session";
+import { Image } from "expo-image";
 import * as WebBrowser from "expo-web-browser";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 //카카오 인증서버 주소록
 const discovery = {
@@ -20,7 +23,8 @@ export default function Territory() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);
-  const logout = useAuthStore((s) => s.logout);
+
+  const insets = useSafeAreaInsets();
 
   const { data: stats } = useQuery({
     queryKey: ["my-stats"],
@@ -33,8 +37,6 @@ export default function Territory() {
     queryFn: () => fetchMyStamps(token!),
     enabled: !!token,
   });
-
-  console.log("정복률:", stats, "스탬프:", stamps);
 
   const redirectUri = makeRedirectUri({
     scheme: "onttang", // 앱 스키마
@@ -69,15 +71,6 @@ export default function Territory() {
     await login(data.token, data.user);
   }
 
-  async function fetchMe() {
-    const res = await fetch(`${API_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` }, // ← 팔찌를 헤더에 붙임
-    });
-    console.log("내 정보 status:", res.status);
-    const data = await res.json();
-    console.log("내 정보:", data);
-  }
-
   if (!token) {
     return (
       <View style={styles.container}>
@@ -93,10 +86,48 @@ export default function Territory() {
   }
 
   return (
-    <View style={styles.container}>
-      <Pressable onPress={logout}>
-        <Text>로그아웃</Text>
-      </Pressable>
+    <View style={[styles.dashboard, { paddingTop: insets.top + spacing.lg }]}>
+      <View style={styles.header}>
+        <Text style={styles.title}>{user?.nickname ?? "나"}님의 영토</Text>
+      </View>
+      {stats ? (
+        <View style={styles.statsCard}>
+          <Text style={styles.statsText}>
+            서울 정복 {stats.stamped} / {stats.total} (
+            {Math.round(stats.rate * 100)}%)
+          </Text>
+        </View>
+      ) : null}
+
+      <FlashList
+        data={stamps ?? []}
+        keyExtractor={(item) => item.content_id}
+        ListHeaderComponent={
+          <Text style={styles.listHeader}>
+            내 스탬프 {stamps?.length ?? 0}곳
+          </Text>
+        }
+        ListEmptyComponent={
+          <Text style={styles.empty}>아직 찍은 스탬프가 없어요</Text>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.row}>
+            <Image
+              source={item.image_url}
+              style={styles.rowImage}
+              contentFit="cover"
+            />
+            <View style={styles.rowText}>
+              <Text style={styles.rowTitle} numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Text style={styles.rowMeta} numberOfLines={1}>
+                {item.address} · {item.visit_count}회 방문
+              </Text>
+            </View>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -120,4 +151,49 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   loginText: { color: colors.white, fontWeight: "700", fontSize: 15 },
+  dashboard: { flex: 1, backgroundColor: colors.background },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  title: { ...typography.header, fontSize: 20 },
+  statsCard: {
+    backgroundColor: colors.chip,
+    marginHorizontal: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: radius.card,
+    marginBottom: spacing.md,
+  },
+  statsText: { ...typography.body, fontWeight: "700", color: colors.ink },
+  listHeader: {
+    ...typography.body,
+    fontWeight: "600",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  empty: {
+    ...typography.body,
+    color: colors.muted,
+    textAlign: "center",
+    padding: spacing.xl,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  rowImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: colors.chip,
+  },
+  rowText: { flex: 1, gap: 2 },
+  rowTitle: { ...typography.body, fontWeight: "600", color: colors.ink },
+  rowMeta: { ...typography.meta, color: colors.muted },
 });
