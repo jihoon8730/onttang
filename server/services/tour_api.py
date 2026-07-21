@@ -37,7 +37,13 @@ def _items(data: dict) -> list[dict]:
         return []
     return item if isinstance(item, list) else [item]
 
+_DETAIL_CACHE = {}
+
 async def fetch_attraction_detail(content_id: str) -> dict:
+    # 1. 캐시 히트: 이미 메모리에 있으면 즉시 반환 (속도 대폭 향상)
+    if content_id in _DETAIL_CACHE:
+        return _DETAIL_CACHE[content_id]
+
     base = {
         "serviceKey": settings.tour_api_key,
         "MobileOS": "ETC",
@@ -58,7 +64,7 @@ async def fetch_attraction_detail(content_id: str) -> dict:
     intro = intro_list[0] if intro_list else {}
     images = _items(image_res.json())
 
-    return {
+    result = {
         "overview": common.get("overview") or None,
         "homepage": common.get("homepage") or None,
         "usetime": intro.get("usetime") or None,
@@ -70,4 +76,11 @@ async def fetch_attraction_detail(content_id: str) -> dict:
             for img in images if img.get("originimgurl")
         ],
     }
+
+    # 2. 캐시 저장 (메모리 초과 방지를 위해 최대 1000개 유지)
+    _DETAIL_CACHE[content_id] = result
+    if len(_DETAIL_CACHE) > 1000:
+        _DETAIL_CACHE.pop(next(iter(_DETAIL_CACHE)))
+
+    return result
 

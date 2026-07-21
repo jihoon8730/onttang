@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const RECENT_KEY = "recentSearches";
 const REGIONS = ["서울", "부산", "제주", "경주", "강원", "전주", "여수", "경기"];
-const THEMES = ["자연", "역사", "거리", "명소"];
+const THEMES = ["자연", "역사", "체험·즐길거리", "명소"];
 
 export default function Search() {
   const router = useRouter();

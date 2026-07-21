@@ -1,32 +1,80 @@
 import { API_URL } from "@/constants/config";
-import { colors, spacing } from "@/constants/theme";
+import { colors, spacing, typography } from "@/constants/theme";
+import { getDistance } from "@/lib/utils";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
-import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text } from "react-native";
+import { SymbolView } from "expo-symbols";
+import { useEffect, useState } from "react";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
   contentId: string;
+  latitude: number;
+  longitude: number;
 };
 
-// "여기 찍기" — 현재 위치를 담아 스탬프 요청 (로그인 필요 · 서버가 반경 검증)
-export default function StampButton({ contentId }: Props) {
+// "여기 찍기" — 현재 위치를 담아 스탬프 요청 및 남은 거리 표시
+export default function StampButton({ contentId, latitude, longitude }: Props) {
   const token = useAuthStore((s) => s.token);
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+  const [distance, setDistance] = useState<number | null>(null);
+  const [modal, setModal] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: "success" | "error";
+  }>({ visible: false, title: "", message: "", type: "success" });
+
+  const showModal = (
+    title: string,
+    message: string,
+    type: "success" | "error" = "error",
+  ) => {
+    setModal({ visible: true, title, message, type });
+  };
+
+  useEffect(() => {
+    let sub: Location.LocationSubscription;
+    (async () => {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== "granted") return; // 권한 없으면 거리 안 보여줌 (클릭 시 요청)
+
+      sub = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.Balanced, distanceInterval: 5 },
+        (loc) => {
+          const dist = getDistance(
+            loc.coords.latitude,
+            loc.coords.longitude,
+            latitude,
+            longitude,
+          );
+          setDistance(dist);
+        },
+      );
+    })();
+    return () => {
+      if (sub) sub.remove();
+    };
+  }, [latitude, longitude]);
 
   const stampHere = async () => {
     if (!token) {
-      Alert.alert("로그인이 필요해요", "스탬프를 찍으려면 먼저 로그인해주세요");
+      showModal(
+        "로그인이 필요해요",
+        "탐험을 시작하려면 먼저 로그인해주세요",
+        "error",
+      );
       return;
     }
 
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(
+      showModal(
         "위치 권한이 필요해요",
-        "현재 위치를 확인해야 스탬프를 찍을 수 있어요",
+        "현재 위치를 확인해야 탐험을 할 수 있어요",
+        "error",
       );
       return;
     }
@@ -49,52 +97,146 @@ export default function StampButton({ contentId }: Props) {
       });
       const data = await res.json();
       if (res.ok) {
-        // 내 스탬프·통계 갱신 → 지도·검색·내 영토의 도장 배지·스탯 즉시 반영
         queryClient.invalidateQueries({ queryKey: ["my-stamps"] });
         queryClient.invalidateQueries({ queryKey: ["my-stats"] });
         if (data.visit_count === 1) {
-          Alert.alert("스탬프 획득!", "이 땅이 내 영토가 되었어요");
+          showModal("탐험 성공!", "새로운 영토를 발견했습니다", "success");
         } else {
-          Alert.alert(
-            "다시 방문했어요",
-            `벌써 ${data.visit_count}번째 방문이에요`,
+          showModal(
+            "탐험 완료",
+            `이곳에 벌써 ${data.visit_count}번째 방문하셨네요!`,
+            "success",
           );
         }
       } else if (res.status === 400) {
-        Alert.alert("아직 멀어요", data.detail ?? "관광지 근처에서 찍어주세요");
+        let distanceMsg = data.detail ?? "목적지 근처에서 탐험을 시도해주세요";
+        if (distance !== null) {
+          const distanceStr =
+            distance < 1000
+              ? `${Math.round(distance)}m`
+              : `${(distance / 1000).toFixed(1)}km`;
+          distanceMsg = `현재 위치에서 ${distanceStr} 떨어져 있습니다.\n\n${distanceMsg}`;
+        }
+        showModal("아직 도착하지 않았어요", distanceMsg, "error");
       } else if (res.status === 401) {
-        Alert.alert(
+        showModal(
           "로그인이 필요해요",
-          "로그인이 만료됐어요 다시 로그인해주세요",
+          "로그인이 만료됐어요. 다시 로그인해주세요",
+          "error",
         );
       } else {
-        Alert.alert("잠시 후 다시 시도해주세요", "스탬프를 찍지 못했어요");
+        showModal("오류 발생", "잠시 후 다시 시도해주세요", "error");
       }
     } catch {
-      Alert.alert("네트워크 오류", "연결을 확인하고 다시 시도해주세요");
+      showModal(
+        "네트워크 오류",
+        "연결 상태를 확인하고 다시 시도해주세요",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Pressable
-      onPress={stampHere}
-      disabled={loading}
-      style={[styles.button, loading && styles.buttonDisabled]}
-    >
-      <Text style={styles.text}>{loading ? "찍는 중…" : "여기 찍기"}</Text>
-    </Pressable>
+    <View style={styles.container}>
+      <View style={styles.distanceRow}>
+        <View style={styles.distanceLabelRow}>
+          <SymbolView
+            name={{ ios: "location.fill", android: "my_location" }}
+            size={14}
+            tintColor={colors.muted}
+          />
+          <Text style={styles.distanceLabel}>현재 위치에서</Text>
+        </View>
+        {distance !== null ? (
+          <Text style={styles.distanceValue}>
+            {distance < 1000
+              ? `${Math.round(distance)}m`
+              : `${(distance / 1000).toFixed(1)}km`}
+          </Text>
+        ) : (
+          <Text style={styles.distanceValue}>계산 중...</Text>
+        )}
+      </View>
+      <Pressable
+        onPress={stampHere}
+        disabled={loading}
+        style={[styles.button, loading && styles.buttonDisabled]}
+      >
+        <Text style={styles.text}>
+          {loading ? "탐험하는 중…" : "이곳 탐험하기"}
+        </Text>
+      </Pressable>
+
+      <Modal
+        visible={modal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModal((p) => ({ ...p, visible: false }))}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <SymbolView
+              name={
+                modal.type === "success"
+                  ? { ios: "checkmark.circle.fill", android: "check_circle" }
+                  : { ios: "exclamationmark.triangle.fill", android: "warning" }
+              }
+              size={56}
+              tintColor={
+                modal.type === "success" ? colors.accent : colors.muted
+              }
+              style={{ marginBottom: spacing.md }}
+            />
+            <Text style={styles.modalTitle}>{modal.title}</Text>
+            <Text style={styles.modalMessage}>{modal.message}</Text>
+            <Pressable
+              style={styles.modalButton}
+              onPress={() => setModal((p) => ({ ...p, visible: false }))}
+            >
+              <Text style={styles.modalButtonText}>확인</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    padding: spacing.lg,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.hairline,
+  },
+  distanceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  distanceLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  distanceLabel: {
+    ...typography.meta,
+    color: colors.muted,
+  },
+  distanceValue: {
+    ...typography.body,
+    fontWeight: "700",
+    color: colors.accent,
+  },
   button: {
     backgroundColor: colors.accent,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
-    marginTop: spacing.lg,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -102,6 +244,50 @@ const styles = StyleSheet.create({
   text: {
     color: colors.white,
     fontWeight: "700",
-    fontSize: 15,
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.xl,
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: 24,
+    padding: spacing.xl,
+    alignItems: "center",
+    width: "100%",
+    maxWidth: 320,
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+  },
+  modalTitle: {
+    ...typography.header,
+    color: colors.ink,
+    marginBottom: spacing.xs,
+    textAlign: "center",
+  },
+  modalMessage: {
+    ...typography.body,
+    color: colors.muted,
+    textAlign: "center",
+    marginBottom: spacing.xl,
+  },
+  modalButton: {
+    backgroundColor: colors.chip,
+    width: "100%",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    ...typography.body,
+    fontWeight: "700",
+    color: colors.ink,
   },
 });

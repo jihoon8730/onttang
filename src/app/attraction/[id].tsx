@@ -7,20 +7,35 @@ import { fetchAttractionDetail, fetchAttractions } from "@/lib/api";
 import { extractHref } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  LayoutAnimation,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  UIManager,
   View,
   useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SymbolView } from "expo-symbols";
+
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function AttractionDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
 
   const { data: attractions = [] } = useQuery({
     queryKey: ["attractions"],
@@ -43,10 +58,12 @@ export default function AttractionDetail() {
     );
   }
 
-  const images = [attraction.image_url, ...(detail?.images ?? [])].filter(
-    (url, index, arr): url is string =>
-      url !== null && arr.indexOf(url) === index,
-  );
+  const images = useMemo(() => {
+    return [attraction.image_url, ...(detail?.images ?? [])].filter(
+      (url, index, arr): url is string =>
+        url !== null && arr.indexOf(url) === index,
+    );
+  }, [attraction.image_url, detail?.images]);
 
   const homepageUrl = detail?.homepage ? extractHref(detail.homepage) : null;
 
@@ -57,12 +74,35 @@ export default function AttractionDetail() {
         <ImageCarousel images={images} width={width} />
 
         <View style={styles.body}>
+          <View style={styles.badgeRow}>
+            {attraction.category ? (
+              <View style={[styles.badge, styles.badgePrimary]}>
+                <Text style={[styles.badgeText, styles.badgeTextPrimary]}>
+                  {attraction.category}
+                </Text>
+              </View>
+            ) : null}
+            {attraction.address ? (
+              <View style={[styles.badge, styles.badgeSecondary]}>
+                <Text style={styles.badgeText}>
+                  {attraction.address.split(" ")[0]}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          
           <Text style={styles.title}>{attraction.title}</Text>
           {attraction.address ? (
-            <Text style={styles.address}>{attraction.address}</Text>
+            <View style={styles.addressRow}>
+              <SymbolView
+                name={{ ios: "map", android: "map" }}
+                size={12}
+                tintColor={colors.muted}
+                style={{ marginTop: 3 }}
+              />
+              <Text style={styles.addressText}>{attraction.address}</Text>
+            </View>
           ) : null}
-
-          <StampButton contentId={id} />
 
           {isLoading ? (
             <ActivityIndicator
@@ -100,7 +140,24 @@ export default function AttractionDetail() {
               {detail?.overview ? (
                 <View style={styles.sectionContainer}>
                   <Text style={styles.sectionTitle}>소개</Text>
-                  <Text style={styles.overview}>{detail.overview}</Text>
+                  <Text 
+                    style={styles.overview}
+                    numberOfLines={isOverviewExpanded ? undefined : 4}
+                  >
+                    {detail.overview}
+                  </Text>
+                  {!isOverviewExpanded && detail.overview.length > 100 && (
+                    <Pressable 
+                      onPress={() => {
+                        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                        setIsOverviewExpanded(true);
+                      }} 
+                      hitSlop={8} 
+                      style={styles.readMoreButton}
+                    >
+                      <Text style={styles.readMoreText}>더보기 ▾</Text>
+                    </Pressable>
+                  )}
                 </View>
               ) : null}
 
@@ -118,6 +175,14 @@ export default function AttractionDetail() {
           )}
         </View>
       </ScrollView>
+
+      <View style={[styles.bottomBar, { paddingBottom: spacing.lg + insets.bottom }]}>
+        <StampButton 
+          contentId={id} 
+          latitude={attraction.latitude} 
+          longitude={attraction.longitude} 
+        />
+      </View>
     </View>
   );
 }
@@ -140,8 +205,42 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     marginTop: -radius.sheet,
   },
+  badgeRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  badgePrimary: {
+    backgroundColor: colors.accentSoft,
+  },
+  badgeSecondary: {
+    backgroundColor: colors.chip,
+  },
+  badgeText: {
+    ...typography.chip,
+    color: colors.muted,
+  },
+  badgeTextPrimary: {
+    color: colors.accentDark,
+  },
   title: { ...typography.title, color: colors.ink },
-  address: { ...typography.meta, color: colors.muted, marginBottom: spacing.md },
+  addressRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 4,
+    marginBottom: spacing.md,
+  },
+  addressText: { 
+    ...typography.meta, 
+    color: colors.muted, 
+    flex: 1, 
+    lineHeight: 18,
+  },
   
   sectionContainer: {
     marginTop: spacing.lg,
@@ -156,6 +255,15 @@ const styles = StyleSheet.create({
     ...typography.body, 
     color: colors.ink, 
     lineHeight: 24,
+  },
+  readMoreButton: {
+    alignSelf: "flex-start",
+    marginTop: spacing.xs,
+  },
+  readMoreText: {
+    ...typography.meta,
+    color: colors.accent,
+    fontWeight: "700",
   },
   useTimeView: {
     gap: spacing.sm,
@@ -178,5 +286,9 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  bottomBar: {
+    paddingBottom: spacing.lg,
+    backgroundColor: colors.white,
   },
 });

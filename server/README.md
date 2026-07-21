@@ -57,7 +57,7 @@ server/
 
 `content_id`(PK) · `title` · `address` · `latitude`/`longitude` · `area_code` · `image_url` · `lcls_systm1/2/3`(TourAPI 분류코드) · `is_featured`(추천 큐레이션 플래그).
 
-카테고리 라벨(`constants.py`): `NA`→자연 · `HS`→역사 · `EX`→거리 · `VE`→명소.
+카테고리 라벨(`constants.py`): `NA`→자연 · `HS`→역사 · `EX`→체험·즐길거리 · `VE`→명소.
 
 ---
 

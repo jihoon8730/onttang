@@ -4,7 +4,7 @@ import MyLocationButton from "@/components/map/my-location-button";
 import { API_URL } from "@/constants/config";
 import { colors, fontMono, spacing, typography } from "@/constants/theme";
 import { useMyLocation } from "@/hooks/use-my-location";
-import { fetchAttractions, fetchMyStamps } from "@/lib/api";
+import { fetchAttractionDetail, fetchAttractions, fetchMyStamps } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { useFilterStore } from "@/stores/use-filter-store";
 import { Attraction } from "@/types/attraction";
@@ -17,7 +17,7 @@ import {
   type NaverMapViewRef,
 } from "@mj-studio/react-native-naver-map";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -58,6 +58,7 @@ const MAP_PADDING_MAX_RATIO = 0.45;
 export default function Index() {
   // --- 외부 훅 ---
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { height: screenH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const BottomSheetScrollable = useBottomSheetScrollableCreator();
@@ -213,6 +214,16 @@ export default function Index() {
     sheetRef.current?.collapse(); // 장소 선택 시 시트 접어 지도 보이게
   }, []);
 
+  // 선택된 장소가 바뀔 때 백그라운드에서 상세 정보를 미리 패치 (프리페칭)
+  useEffect(() => {
+    if (selectedId) {
+      queryClient.prefetchQuery({
+        queryKey: ["attraction-detail", selectedId],
+        queryFn: () => fetchAttractionDetail(selectedId),
+      });
+    }
+  }, [selectedId, queryClient]);
+
   const openDetail = useCallback(
     (a: Attraction) => router.push(`/attraction/${a.content_id}`),
     [router],
@@ -247,6 +258,9 @@ export default function Index() {
           style={styles.map}
           initialCamera={INITIAL_CAMERA}
           mapPadding={mapPadding}
+          minZoom={6}
+          maxZoom={18}
+          useTextureView={true}
           onCameraIdle={(args) => {
             setRegion(args.region);
             listRef.current?.scrollToTop({ animated: false });
@@ -284,12 +298,14 @@ export default function Index() {
         animationConfigs={animationConfigs}
         enableDynamicSizing={false}
         enableContentPanningGesture={false}
+        keyboardBehavior="interactive"
       >
         <FlashList
           ref={listRef}
           style={styles.list}
           data={listData}
           keyExtractor={(item) => item.content_id}
+          estimatedItemSize={110}
           ListHeaderComponent={
             <View style={styles.sheetHead}>
               <Text style={styles.sheetEyebrow}>이 지역</Text>
