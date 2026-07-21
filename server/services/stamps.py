@@ -73,6 +73,14 @@ def get_stats(user_id: int) -> dict:
             .where(Stamp.user_id == user_id, Attraction.is_featured.is_(True))
             .group_by(Attraction.area_code)
         ).all()
+
+        # 내가 찍은 테마(카테고리) 종류 — 중복 제거
+        theme_rows = session.execute(
+            select(Attraction.lcls_systm1)
+            .join(Stamp, Stamp.content_id == Attraction.content_id)
+            .where(Stamp.user_id == user_id, Attraction.is_featured.is_(True))
+            .distinct()
+        ).all()
         
     stamped_by_region = {code: cnt for code, cnt in stamped_rows}
     regions = [
@@ -86,11 +94,19 @@ def get_stats(user_id: int) -> dict:
         for code, region_total in total_rows
     ]
     regions.sort(key=lambda r: r["rate"], reverse=True)
+
+    # CATEGORY_LABELS에 있는 테마만 카운트 (4개: 자연·역사·거리·명소)
+    themes = {code for (code,) in theme_rows if code in CATEGORY_LABELS}
+
     return {
         "stamped": stamped,
         "total": total,
         "rate": round(stamped / total, 3) if total else 0,
-        "regions": regions
+        "regions": regions,
+        "region_stamped": sum(1 for r in regions if r["stamped"] > 0),
+        "region_total": len(regions),
+        "theme_stamped": len(themes),
+        "theme_total": len(CATEGORY_LABELS),
     }
 
 

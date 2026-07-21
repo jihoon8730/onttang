@@ -1,12 +1,13 @@
 import RegionExplorationRate from "@/components/territory/RegionExplorationRate";
+import StampSeal, { EmptySeal } from "@/components/territory/StampSeal";
+import StatCards from "@/components/territory/StatCards";
 import { API_URL, DEV_HOST } from "@/constants/config";
-import { colors, radius, spacing, typography } from "@/constants/theme";
+import { colors, fontMono, radius, spacing, typography } from "@/constants/theme";
 import { fetchMyStamps, fetchMyStats } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { AuthRequest, makeRedirectUri } from "expo-auth-session";
-import { Image } from "expo-image";
 import * as WebBrowser from "expo-web-browser";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,6 +20,9 @@ const discovery = {
 
 const KAKAO_REST_KEY = "f7e7cb7e5451452f6be83f1d5e2066b9";
 const KAKAO_REDIRECT_URI = `http://${DEV_HOST}:8081/kakao-bridge.html`;
+
+// 도장이 손으로 찍힌 느낌 — 인장마다 살짝 다른 기울기
+const SEAL_ROTATIONS = [-6, 5, 4, -5, 3, -4];
 
 export default function Territory() {
   const token = useAuthStore((s) => s.token);
@@ -94,19 +98,38 @@ export default function Territory() {
         contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
         ListHeaderComponent={
           <>
-            <View style={styles.header}>
-              <Text style={styles.title}>
-                {user?.nickname ?? "나"}님의 영토
+            <View style={styles.hero}>
+              <Text style={styles.heroEyebrow}>
+                {user?.nickname ?? "나"}의 영토
               </Text>
+              <Text style={styles.heroTitle}>
+                전국{" "}
+                <Text style={styles.heroAccent}>{stats?.stamped ?? 0}곳</Text>을{"\n"}
+                탐험했어요
+              </Text>
+              <View style={styles.nation}>
+                <View style={styles.meter}>
+                  <View
+                    style={[
+                      styles.meterFill,
+                      { width: `${Math.max((stats?.rate ?? 0) * 100, 2)}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.nationPct}>
+                  전국의 {((stats?.rate ?? 0) * 100).toFixed(1)}%
+                </Text>
+              </View>
             </View>
 
             {stats ? (
-              <View style={styles.statsCard}>
-                <Text style={styles.statsText}>
-                  전국 탐험 {stats.stamped} / {stats.total} (
-                  {Math.round(stats.rate * 100)}%)
-                </Text>
-              </View>
+              <StatCards
+                stamped={stats.stamped}
+                regionStamped={stats.region_stamped}
+                regionTotal={stats.region_total}
+                themeStamped={stats.theme_stamped}
+                themeTotal={stats.theme_total}
+              />
             ) : null}
 
             {/* 지역별 탐험률 */}
@@ -115,29 +138,25 @@ export default function Territory() {
             ) : null}
 
             <Text style={styles.listHeader}>
-              내 스탬프 {stamps?.length ?? 0}곳
+              탐험한 곳 {stamps?.length ?? 0}곳
             </Text>
           </>
         }
+        numColumns={4}
         ListEmptyComponent={
-          <Text style={styles.empty}>아직 찍은 스탬프가 없어요</Text>
+          <Text style={styles.empty}>아직 탐험한 곳이 없어요</Text>
         }
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Image
-              source={item.image_url}
-              style={styles.rowImage}
-              contentFit="cover"
-            />
-            <View style={styles.rowText}>
-              <Text style={styles.rowTitle} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={styles.rowMeta} numberOfLines={1}>
-                {item.address} · {item.visit_count}회 방문
-              </Text>
+        ListFooterComponent={
+          (stamps?.length ?? 0) > 0 ? (
+            <View style={styles.footerRow}>
+              <View style={styles.footerCell}>
+                <EmptySeal />
+              </View>
             </View>
-          </View>
+          ) : null
+        }
+        renderItem={({ item, index }) => (
+          <StampSeal stamp={item} rotate={SEAL_ROTATIONS[index % SEAL_ROTATIONS.length]} />
         )}
       />
     </View>
@@ -164,22 +183,34 @@ const styles = StyleSheet.create({
   },
   loginText: { color: colors.white, fontWeight: "700", fontSize: 15 },
   dashboard: { flex: 1, backgroundColor: colors.background },
-  header: {
+  hero: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    gap: spacing.xs,
+  },
+  heroEyebrow: { ...typography.meta, color: colors.muted },
+  heroTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: colors.ink,
+    lineHeight: 34,
+  },
+  heroAccent: { color: colors.accent },
+  nation: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    gap: spacing.md,
+    marginTop: spacing.md,
   },
-  title: { ...typography.header, fontSize: 20 },
-  statsCard: {
+  meter: {
+    flex: 1,
+    height: 7,
+    borderRadius: 999,
     backgroundColor: colors.chip,
-    marginHorizontal: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: radius.card,
-    marginBottom: spacing.md,
+    overflow: "hidden",
   },
-  statsText: { ...typography.body, fontWeight: "700", color: colors.ink },
+  meterFill: { height: "100%", borderRadius: 999, backgroundColor: colors.accent },
+  nationPct: { fontFamily: fontMono, fontSize: 12, color: colors.muted, fontWeight: "600" },
   listHeader: {
     ...typography.body,
     fontWeight: "600",
@@ -192,20 +223,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     padding: spacing.xl,
   },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  rowImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 10,
-    backgroundColor: colors.chip,
-  },
-  rowText: { flex: 1, gap: 2 },
-  rowTitle: { ...typography.body, fontWeight: "600", color: colors.ink },
-  rowMeta: { ...typography.meta, color: colors.muted },
+  footerRow: { flexDirection: "row" },
+  footerCell: { width: "25%" },
 });

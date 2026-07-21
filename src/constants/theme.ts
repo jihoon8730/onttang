@@ -1,4 +1,9 @@
+import { Platform } from "react-native";
 import type { TextStyle } from "react-native";
+
+// 데이터·날짜용 모노스페이스 (여권/장부 레지스터 느낌)
+export const fontMono = Platform.select({ ios: "Menlo", default: "monospace" });
+
 // 색상 토큰
 export const colors = {
   accent: "#E8643C", // 스탬프·CTA·브랜드

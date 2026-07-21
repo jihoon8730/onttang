@@ -24,4 +24,8 @@ export type MyStats = {
   total: number;
   rate: number;
   regions: RegionStat[];
+  region_stamped: number; // 밟은 지역 수
+  region_total: number; // 전체 지역 수 (16)
+  theme_stamped: number; // 찍은 테마 수
+  theme_total: number; // 전체 테마 수 (4)
 };
