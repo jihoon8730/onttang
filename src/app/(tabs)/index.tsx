@@ -26,6 +26,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Region = {
   latitude: number;
@@ -57,6 +58,7 @@ export default function Index() {
   // --- 외부 훅 ---
   const router = useRouter();
   const { height: screenH } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const BottomSheetScrollable = useBottomSheetScrollableCreator();
   const animationConfigs = useBottomSheetTimingConfigs({
     duration: SHEET_ANIM_DURATION,
@@ -279,7 +281,9 @@ export default function Index() {
             </Text>
           }
           renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: LIST_BOTTOM_PADDING }}
+          contentContainerStyle={{
+            paddingBottom: LIST_BOTTOM_PADDING + insets.bottom,
+          }}
           renderScrollComponent={BottomSheetScrollable}
           maintainVisibleContentPosition={{ disabled: true }}
         />

@@ -2,7 +2,7 @@ from math import radians, sin, cos, asin, sqrt
 from sqlalchemy import select, func
 from database import SessionLocal
 from models import Stamp, Attraction
-from constants import CATEGORY_LABELS
+from constants import CATEGORY_LABELS, REGION_LABELS
 
 STAMP_RADIUS_M = 200  # 이 반경(m) 안에서만 스탬프 허용
 
@@ -59,11 +59,38 @@ def get_stats(user_id: int) -> dict:
             .select_from(Attraction)
             .where(Attraction.is_featured.is_(True))
         )
+        # 지역별 대표 관광지 수
+        total_rows = session.execute(
+            select(Attraction.area_code, func.count())
+            .where(Attraction.is_featured.is_(True))
+            .group_by(Attraction.area_code)
+        ).all()
 
+        # 지역별 내 스탬프 수
+        stamped_rows = session.execute(
+            select(Attraction.area_code, func.count())
+            .join(Stamp, Stamp.content_id == Attraction.content_id)
+            .where(Stamp.user_id == user_id, Attraction.is_featured.is_(True))
+            .group_by(Attraction.area_code)
+        ).all()
+        
+    stamped_by_region = {code: cnt for code, cnt in stamped_rows}
+    regions = [
+        {
+            "code": code,
+            "name": REGION_LABELS.get(code, code),
+            "stamped": stamped_by_region.get(code, 0),
+            "total": region_total,
+            "rate": round(stamped_by_region.get(code, 0) / region_total, 4),
+        }
+        for code, region_total in total_rows
+    ]
+    regions.sort(key=lambda r: r["rate"], reverse=True)
     return {
         "stamped": stamped,
         "total": total,
         "rate": round(stamped / total, 3) if total else 0,
+        "regions": regions
     }
 
 

@@ -1,3 +1,4 @@
+import RegionExplorationRate from "@/components/territory/RegionExplorationRate";
 import { API_URL, DEV_HOST } from "@/constants/config";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { fetchMyStamps, fetchMyStats } from "@/lib/api";
@@ -87,29 +88,36 @@ export default function Territory() {
 
   return (
     <View style={[styles.dashboard, { paddingTop: insets.top + spacing.lg }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{user?.nickname ?? "나"}님의 영토</Text>
-      </View>
-      {stats ? (
-        <View style={styles.statsCard}>
-          <Text style={styles.statsText}>
-            전국 탐험 {stats.stamped} / {stats.total} (
-            {Math.round(stats.rate * 100)}%)
-          </Text>
-        </View>
-      ) : null}
-
-      <View style={styles.explorationRateBox}>
-        <Text>지역별 탐험률</Text>
-      </View>
-
       <FlashList
         data={stamps ?? []}
         keyExtractor={(item) => item.content_id}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
         ListHeaderComponent={
-          <Text style={styles.listHeader}>
-            내 스탬프 {stamps?.length ?? 0}곳
-          </Text>
+          <>
+            <View style={styles.header}>
+              <Text style={styles.title}>
+                {user?.nickname ?? "나"}님의 영토
+              </Text>
+            </View>
+
+            {stats ? (
+              <View style={styles.statsCard}>
+                <Text style={styles.statsText}>
+                  전국 탐험 {stats.stamped} / {stats.total} (
+                  {Math.round(stats.rate * 100)}%)
+                </Text>
+              </View>
+            ) : null}
+
+            {/* 지역별 탐험률 */}
+            {stats ? (
+              <RegionExplorationRate regions={stats.regions} />
+            ) : null}
+
+            <Text style={styles.listHeader}>
+              내 스탬프 {stamps?.length ?? 0}곳
+            </Text>
+          </>
         }
         ListEmptyComponent={
           <Text style={styles.empty}>아직 찍은 스탬프가 없어요</Text>
@@ -200,9 +208,4 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, gap: 2 },
   rowTitle: { ...typography.body, fontWeight: "600", color: colors.ink },
   rowMeta: { ...typography.meta, color: colors.muted },
-
-  // 지역별 탐험률
-  explorationRateBox: {
-    borderWidth: 1,
-  },
 });

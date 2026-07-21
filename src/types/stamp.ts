@@ -9,9 +9,19 @@ export type MyStamp = {
   stamped_at: string;
 };
 
+// 지역별 탐험률 한 개
+export type RegionStat = {
+  code: string;
+  name: string;
+  stamped: number;
+  total: number;
+  rate: number;
+};
+
 // 탐험률
 export type MyStats = {
   stamped: number;
   total: number;
   rate: number;
+  regions: RegionStat[];
 };
