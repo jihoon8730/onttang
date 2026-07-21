@@ -9,11 +9,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 class KakaoLoginIn(BaseModel):
     code: str
+    redirect_uri: str
 
 
 @router.post("/kakao")
 async def kakao_login(body: KakaoLoginIn):
-    return await auth_service.login_with_kakao(body.code)
+    return await auth_service.login_with_kakao(body.code, body.redirect_uri)
 
 
 bearer = HTTPBearer()

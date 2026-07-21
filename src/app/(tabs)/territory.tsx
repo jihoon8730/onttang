@@ -1,5 +1,8 @@
 import { API_URL, DEV_HOST } from "@/constants/config";
+import { colors, radius, spacing, typography } from "@/constants/theme";
+import { fetchMyStamps, fetchMyStats } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
+import { useQuery } from "@tanstack/react-query";
 import { AuthRequest, makeRedirectUri } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -18,6 +21,20 @@ export default function Territory() {
   const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);
   const logout = useAuthStore((s) => s.logout);
+
+  const { data: stats } = useQuery({
+    queryKey: ["my-stats"],
+    queryFn: () => fetchMyStats(token!),
+    enabled: !!token,
+  });
+
+  const { data: stamps } = useQuery({
+    queryKey: ["my-stamps"],
+    queryFn: () => fetchMyStamps(token!),
+    enabled: !!token,
+  });
+
+  console.log("정복률:", stats, "스탬프:", stamps);
 
   const redirectUri = makeRedirectUri({
     scheme: "onttang", // 앱 스키마
@@ -46,7 +63,7 @@ export default function Territory() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, redirect_uri: KAKAO_REDIRECT_URI }),
     });
     const data = await res.json();
     await login(data.token, data.user);
@@ -61,35 +78,46 @@ export default function Territory() {
     console.log("내 정보:", data);
   }
 
+  if (!token) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.gateTitle}>내 영토</Text>
+        <Text style={styles.gateHint}>
+          로그인하고 전국에 내 스탬프를 남겨보세요
+        </Text>
+        <Pressable onPress={startLogin} style={styles.loginButton}>
+          <Text style={styles.loginText}>카카오 로그인</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {token ? (
-        <>
-          <Text style={styles.text}>로그인됨 🎉</Text>
-          <Pressable onPress={logout} style={styles.button}>
-            <Text style={styles.buttonText}>로그아웃</Text>
-          </Pressable>
-          <Pressable onPress={fetchMe} style={styles.button}>
-            <Text style={styles.buttonText}>내 정보 확인</Text>
-          </Pressable>
-        </>
-      ) : (
-        <Pressable onPress={startLogin} style={styles.button}>
-          <Text style={styles.buttonText}>카카오 로그인</Text>
-        </Pressable>
-      )}
+      <Pressable onPress={logout}>
+        <Text>로그아웃</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center" },
-  text: { fontSize: 16 },
-  button: {
-    borderWidth: 1,
-    padding: 12,
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.md,
+    padding: spacing.xl,
+    backgroundColor: colors.background,
   },
-  buttonText: {
-    fontSize: 12,
+  gateTitle: { ...typography.header, fontSize: 24 },
+  gateHint: { ...typography.body, color: colors.muted, textAlign: "center" },
+  loginButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.button,
+    marginTop: spacing.md,
   },
+  loginText: { color: colors.white, fontWeight: "700", fontSize: 15 },
 });

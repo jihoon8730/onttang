@@ -5,9 +5,9 @@ from security import create_access_token
 from services.kakao import exchange_code, get_kakao_user
 
 
-async def login_with_kakao(code: str) -> dict:
+async def login_with_kakao(code: str, redirect_uri: str) -> dict:
     """카카오 인가코드 → 유저 upsert → 자체 JWT 발급."""
-    access_token = await exchange_code(code)
+    access_token = await exchange_code(code, redirect_uri)
     kakao_user = await get_kakao_user(access_token)
 
     with SessionLocal() as session:
