@@ -1,15 +1,18 @@
 import { colors, radius, spacing, typography } from "@/constants/theme";
+import { useAppleLogin } from "@/hooks/use-apple-login";
 import { useKakaoLogin } from "@/hooks/use-kakao-login";
 import { useAuthStore } from "@/stores/use-auth-store";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useEffect } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Login() {
   const { startLogin } = useKakaoLogin();
+  const { startLogin: startAppleLogin } = useAppleLogin();
   const token = useAuthStore((s) => s.token);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -48,6 +51,21 @@ export default function Login() {
           />
           <Text style={styles.kakaoText}>카카오로 시작하기</Text>
         </Pressable>
+
+        {/* 애플 로그인은 iOS 전용 (애플 심사 4.8 대응, 공식 버튼 필수) */}
+        {Platform.OS === "ios" && (
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={
+              AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+            }
+            buttonStyle={
+              AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+            }
+            cornerRadius={radius.button}
+            style={styles.appleButton}
+            onPress={startAppleLogin}
+          />
+        )}
 
         <Pressable onPress={() => router.back()} style={styles.guestButton}>
           <Text style={styles.guestText}>게스트로 둘러보기 →</Text>
@@ -101,6 +119,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   kakaoIcon: { opacity: 0.85 },
+  appleButton: { height: 52, width: "100%" },
   kakaoText: {
     color: "rgba(0, 0, 0, 0.85)",
     fontWeight: "700",
