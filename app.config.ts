@@ -18,6 +18,10 @@ const config: ExpoConfig = {
     },
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      // 앱 개발 기준 로케일을 한국어로 선언 — 시스템 UI(애플 로그인 버튼 등)가
+      // 기기 언어와 무관하게 한국어로 안정적으로 표시되도록.
+      CFBundleDevelopmentRegion: "ko",
+      CFBundleLocalizations: ["ko", "en"],
     },
   },
   android: {
