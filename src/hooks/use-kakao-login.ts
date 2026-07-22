@@ -1,4 +1,4 @@
-import { API_URL, DEV_HOST } from "@/constants/config";
+import { API_URL, KAKAO_BRIDGE_URL } from "@/constants/config";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { AuthRequest, makeRedirectUri } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
@@ -10,7 +10,7 @@ const discovery = {
 };
 
 const KAKAO_REST_KEY = "f7e7cb7e5451452f6be83f1d5e2066b9";
-const KAKAO_REDIRECT_URI = `http://${DEV_HOST}:8081/kakao-bridge.html`;
+const KAKAO_REDIRECT_URI = KAKAO_BRIDGE_URL;
 
 export function useKakaoLogin() {
   const login = useAuthStore((s) => s.login);
