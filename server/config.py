@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -9,5 +10,16 @@ class Settings(BaseSettings):
     jwt_secret: str
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # Railway 등은 postgresql:// (또는 postgres://) 를 줌
+    # → SQLAlchemy가 쓰는 psycopg3 드라이버용 스킴으로 자동 변환
+    @field_validator("database_url")
+    @classmethod
+    def use_psycopg_driver(cls, v: str) -> str:
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+psycopg://", 1)
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+psycopg://", 1)
+        return v
 
 settings = Settings()
