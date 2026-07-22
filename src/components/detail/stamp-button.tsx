@@ -8,7 +8,14 @@ import * as Location from "expo-location";
 import { SymbolView } from "expo-symbols";
 import LottieView from "lottie-react-native";
 import { useEffect, useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 type Props = {
   contentId: string;
@@ -49,21 +56,26 @@ export default function StampButton({ contentId, latitude, longitude }: Props) {
   useEffect(() => {
     let sub: Location.LocationSubscription;
     (async () => {
-      const { status } = await Location.getForegroundPermissionsAsync();
-      if (status !== "granted") return; // 권한 없으면 거리 안 보여줌 (클릭 시 요청)
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== "granted") return; // 권한 없으면 거리 안 보여줌 (클릭 시 요청)
 
-      sub = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.Balanced, distanceInterval: 5 },
-        (loc) => {
-          const dist = getDistance(
-            loc.coords.latitude,
-            loc.coords.longitude,
-            latitude,
-            longitude,
-          );
-          setDistance(dist);
-        },
-      );
+        sub = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.Balanced, distanceInterval: 5 },
+          (loc) => {
+            const dist = getDistance(
+              loc.coords.latitude,
+              loc.coords.longitude,
+              latitude,
+              longitude,
+            );
+            setDistance(dist);
+          },
+        );
+      } catch (e) {
+        // 위치 서비스 꺼짐 등으로 추적 실패 — 거리 표시만 생략 (크래시 방지)
+        console.warn("거리 추적을 시작하지 못했어요", e);
+      }
     })();
     return () => {
       if (sub) sub.remove();
@@ -91,9 +103,25 @@ export default function StampButton({ contentId, latitude, longitude }: Props) {
     }
 
     setLoading(true);
-    try {
-      const loc = await Location.getCurrentPositionAsync();
 
+    // 현재 위치 가져오기 (Android는 위치 서비스 꺼짐 대비해 켜기 유도)
+    let loc: Location.LocationObject;
+    try {
+      if (Platform.OS === "android") {
+        await Location.enableNetworkProviderAsync();
+      }
+      loc = await Location.getCurrentPositionAsync();
+    } catch {
+      setLoading(false);
+      showModal(
+        "위치를 확인할 수 없어요",
+        "기기의 위치 서비스가 켜져 있는지 확인해주세요",
+        "error",
+      );
+      return;
+    }
+
+    try {
       const res = await fetch(`${API_URL}/stamps`, {
         method: "POST",
         headers: {
@@ -112,13 +140,18 @@ export default function StampButton({ contentId, latitude, longitude }: Props) {
         queryClient.invalidateQueries({ queryKey: ["my-stats"] });
         queryClient.invalidateQueries({ queryKey: ["rankings"] });
         if (data.visit_count === 1) {
-          showModal("탐험 성공!", "새로운 영토를 발견했습니다", "celebration", data.visit_count);
+          showModal(
+            "탐험 성공!",
+            "새로운 영토를 발견했습니다",
+            "celebration",
+            data.visit_count,
+          );
         } else {
           showModal(
             "탐험 완료",
             `이곳에 벌써 ${data.visit_count}번째 방문하셨네요!`,
             "celebration",
-            data.visit_count
+            data.visit_count,
           );
         }
       } else if (res.status === 400) {
@@ -195,16 +228,19 @@ export default function StampButton({ contentId, latitude, longitude }: Props) {
                 source={require("../../assets/lottie/confetti.json")}
                 autoPlay
                 loop
-                style={StyleSheet.absoluteFillObject}
                 resizeMode="cover"
               />
               <View style={styles.celebInner}>
                 <View style={styles.celebIconBadge}>
-                  <SymbolView name="flag.fill" size={48} tintColor={colors.accent} />
+                  <SymbolView
+                    name={{ ios: "flag.fill", android: "flag" }}
+                    size={48}
+                    tintColor={colors.accent}
+                  />
                 </View>
                 <Text style={styles.celebTitle}>{modal.title}</Text>
                 <Text style={styles.celebMessage}>{modal.message}</Text>
-                
+
                 <View style={styles.statBox}>
                   <View style={styles.statRow}>
                     <Text style={styles.statLabel}>이번 장소 방문</Text>
@@ -213,7 +249,9 @@ export default function StampButton({ contentId, latitude, longitude }: Props) {
                   <View style={styles.statDivider} />
                   <View style={styles.statRow}>
                     <Text style={styles.statLabel}>나의 전국 개척</Text>
-                    <Text style={styles.statValue}>{stats?.stamped ?? 0}곳</Text>
+                    <Text style={styles.statValue}>
+                      {stats?.stamped ?? 0}곳
+                    </Text>
                   </View>
                 </View>
 
@@ -231,7 +269,10 @@ export default function StampButton({ contentId, latitude, longitude }: Props) {
                 name={
                   modal.type === "success"
                     ? { ios: "checkmark.circle.fill", android: "check_circle" }
-                    : { ios: "exclamationmark.triangle.fill", android: "warning" }
+                    : {
+                        ios: "exclamationmark.triangle.fill",
+                        android: "warning",
+                      }
                 }
                 size={56}
                 tintColor={
@@ -341,7 +382,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.ink,
   },
-  
+
   // Celebration UI
   celebrationContent: {
     backgroundColor: colors.white,

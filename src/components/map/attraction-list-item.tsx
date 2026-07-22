@@ -75,11 +75,11 @@ function AttractionListItem({
       >
         {selected ? (
           <View style={styles.exploreBtnSelected}>
-            <SymbolView name="chevron.right" size={14} weight="bold" tintColor={colors.accent} style={{ marginLeft: 1 }} />
+            <SymbolView name={{ ios: "chevron.right", android: "chevron_right" }} size={14} weight="bold" tintColor={colors.accent} style={{ marginLeft: 1 }} />
           </View>
         ) : (
           <SymbolView
-            name="chevron.right"
+            name={{ ios: "chevron.right", android: "chevron_right" }}
             size={16}
             tintColor={colors.muted}
           />

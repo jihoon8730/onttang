@@ -87,7 +87,7 @@ export default function More() {
               />
             ) : (
               <SymbolView
-                name="person.fill"
+                name={{ ios: "person.fill", android: "person" }}
                 size={40}
                 tintColor={colors.muted}
               />
@@ -112,7 +112,7 @@ export default function More() {
             >
               <Text style={styles.rowLabel}>{label}</Text>
               <SymbolView
-                name="chevron.right"
+                name={{ ios: "chevron.right", android: "chevron_right" }}
                 size={13}
                 tintColor={colors.muted}
               />
@@ -135,7 +135,7 @@ export default function More() {
             >
               <Text style={styles.rowLabel}>{label}</Text>
               <SymbolView
-                name="chevron.right"
+                name={{ ios: "chevron.right", android: "chevron_right" }}
                 size={13}
                 tintColor={colors.muted}
               />
@@ -154,7 +154,7 @@ export default function More() {
           >
             <Text style={styles.rowLabel}>이용약관 및 개인정보처리방침</Text>
             <SymbolView
-              name="chevron.right"
+              name={{ ios: "chevron.right", android: "chevron_right" }}
               size={13}
               tintColor={colors.muted}
             />

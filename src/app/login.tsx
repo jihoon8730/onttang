@@ -41,7 +41,7 @@ export default function Login() {
       <View style={styles.actions}>
         <Pressable onPress={startLogin} style={styles.kakaoButton}>
           <SymbolView
-            name="message.fill"
+            name={{ ios: "message.fill", android: "chat" }}
             size={18}
             tintColor="#000000"
             style={styles.kakaoIcon}

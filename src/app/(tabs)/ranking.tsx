@@ -111,23 +111,25 @@ function ChampionAvatar({ entry }: { entry: RankingEntry }) {
 function ChampionCard({ entry }: { entry: RankingEntry }) {
   return (
     <View style={styles.champion}>
-      <LottieView
-        source={require("../../assets/lottie/confetti.json")}
-        autoPlay
-        loop
-        speed={0.7}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-      />
-      <Text style={styles.champLabel}>최다 탐험 챔피언</Text>
-      <ChampionAvatar entry={entry} />
-      <Text style={styles.champName} numberOfLines={1}>
-        {entry.nickname ?? "익명의 탐험가"}
-      </Text>
-      <Text style={styles.champCountRow}>
-        <Text style={styles.champCount}>{comma(entry.stamp_count)}</Text> 곳
-        개척
-      </Text>
+      <View style={styles.championInner}>
+        <LottieView
+          source={require("../../assets/lottie/confetti.json")}
+          autoPlay
+          loop
+          speed={0.7}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+        <Text style={styles.champLabel}>최다 탐험 챔피언</Text>
+        <ChampionAvatar entry={entry} />
+        <Text style={styles.champName} numberOfLines={1}>
+          {entry.nickname ?? "익명의 탐험가"}
+        </Text>
+        <Text style={styles.champCountRow}>
+          <Text style={styles.champCount}>{comma(entry.stamp_count)}</Text> 곳
+          개척
+        </Text>
+      </View>
     </View>
   );
 }
@@ -203,7 +205,7 @@ export default function Ranking() {
             onPress={() => router.push("/login")}
             style={styles.loginCta}
           >
-            <SymbolView name="person.fill" size={16} tintColor={colors.white} />
+            <SymbolView name={{ ios: "person.fill", android: "person" }} size={16} tintColor={colors.white} />
             <Text style={styles.loginCtaText}>로그인하고 순위 겨루기</Text>
           </Pressable>
         </View>
@@ -244,7 +246,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 8,
-    elevation: 1,
+    elevation: 0,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.03)",
   },
   rowBordered: {
     borderWidth: 1.5,
@@ -300,20 +304,23 @@ const styles = StyleSheet.create({
 
   // champion spotlight (1위)
   champion: {
-    alignItems: "center",
-    paddingVertical: spacing.xl * 1.2,
-    paddingHorizontal: spacing.lg,
     borderRadius: 24,
     backgroundColor: colors.white,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.05,
     shadowRadius: 16,
-    elevation: 4,
-    overflow: "hidden",
+    elevation: 1,
     marginBottom: spacing.xl,
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.02)",
+    borderColor: "rgba(0,0,0,0.04)",
+  },
+  championInner: {
+    alignItems: "center",
+    paddingVertical: spacing.xl * 1.2,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 24,
+    overflow: "hidden",
   },
   champLabel: {
     fontFamily: fontMono,
@@ -335,8 +342,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
-    elevation: 2,
-    overflow: "hidden",
+    elevation: 0,
   },
   champAvatarFallback: { alignItems: "center", justifyContent: "center" },
   champInitial: { fontSize: 30, fontWeight: "800", color: colors.muted },
@@ -398,7 +404,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
-    elevation: 2,
+    elevation: 1,
   },
   meRank: {
     width: 26,

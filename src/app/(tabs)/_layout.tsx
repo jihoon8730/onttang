@@ -21,11 +21,11 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Label>내 영토</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="ranking">
-        <NativeTabs.Trigger.Icon sf="trophy.fill" md="emoji-events" />
+        <NativeTabs.Trigger.Icon sf="trophy.fill" md="emoji_events" />
         <NativeTabs.Trigger.Label>랭킹</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="more">
-        <NativeTabs.Trigger.Icon sf="ellipsis" md="more-horiz" />
+        <NativeTabs.Trigger.Icon sf="ellipsis" md="more_horiz" />
         <NativeTabs.Trigger.Label>더보기</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>

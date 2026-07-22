@@ -1,6 +1,7 @@
 import { NaverMapViewRef } from "@mj-studio/react-native-naver-map";
 import * as Location from "expo-location";
 import { RefObject, useEffect, useRef, useState } from "react";
+import { Platform } from "react-native";
 
 type Coords = { latitude: number; longitude: number };
 
@@ -27,26 +28,36 @@ export function useMyLocation(mapRef: RefObject<NaverMapViewRef | null>) {
 
   // 권한 요청 → 현재 위치로 카메라 이동 → 이후 이동을 실시간 추적
   const showMyLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") return;
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
 
-    const loc = await Location.getCurrentPositionAsync();
-    const coords = {
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-    };
-    setMyLocation(coords);
-    mapRef.current?.animateCameraTo({ ...coords, zoom: 15 });
+      // Android: 위치 서비스가 꺼져 있으면 시스템에 켜달라고 요청
+      if (Platform.OS === "android") {
+        await Location.enableNetworkProviderAsync();
+      }
 
-    locationSub.current = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.High, distanceInterval: 1 },
-      (loc) => {
-        setMyLocation({
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        });
-      },
-    );
+      const loc = await Location.getCurrentPositionAsync();
+      const coords = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      };
+      setMyLocation(coords);
+      mapRef.current?.animateCameraTo({ ...coords, zoom: 15 });
+
+      locationSub.current = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, distanceInterval: 1 },
+        (loc) => {
+          setMyLocation({
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          });
+        },
+      );
+    } catch (e) {
+      // 위치 서비스 꺼짐/거부 등 — 크래시 대신 조용히 무시
+      console.warn("내 위치를 가져오지 못했어요", e);
+    }
   };
 
   return { myLocation, pulseRadius, showMyLocation };

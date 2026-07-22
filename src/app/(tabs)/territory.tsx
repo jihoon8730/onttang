@@ -64,7 +64,7 @@ export default function Territory() {
             style={{ width: 120, height: 120 }}
           />
           <View style={styles.gateBadge}>
-            <SymbolView name="checkmark.seal.fill" size={24} tintColor={colors.white} />
+            <SymbolView name={{ ios: "checkmark.seal.fill", android: "verified" }} size={24} tintColor={colors.white} />
           </View>
         </View>
 

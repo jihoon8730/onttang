@@ -326,7 +326,7 @@ export default function Index() {
               <View style={styles.sheetHeaderLeft}>
                 <View style={styles.sheetIconWrapper}>
                   <SymbolView
-                    name="map.fill"
+                    name={{ ios: "map.fill", android: "map" }}
                     size={16}
                     tintColor={colors.accent}
                     type="hierarchical"
