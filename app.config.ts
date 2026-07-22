@@ -2,7 +2,7 @@ import "dotenv/config";
 import { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-  name: "onttang",
+  name: "온땅",
   slug: "onttang",
   version: "1.0.0",
   orientation: "portrait",
