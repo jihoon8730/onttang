@@ -23,7 +23,7 @@ const config: ExpoConfig = {
   android: {
     package: "com.jihoon8730.onttang",
     adaptiveIcon: {
-      backgroundColor: "#f3f1ea",
+      backgroundColor: "#ffffff",
       foregroundImage: "./assets/images/android-icon-foreground.png",
       backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
@@ -48,7 +48,7 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
-        backgroundColor: "#f3f1ea",
+        backgroundColor: "#ffffff",
         image: "./assets/images/splash-icon.png",
         imageWidth: 120,
       },
