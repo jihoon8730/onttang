@@ -1,5 +1,6 @@
 import { API_URL } from "@/constants/config";
 import { Attraction, AttractionDetail } from "@/types/attraction";
+import { Rankings } from "@/types/ranking";
 import { MyStamp, MyStats } from "@/types/stamp";
 
 export async function fetchAttractions(): Promise<Attraction[]> {
@@ -29,6 +30,14 @@ export async function fetchMyStats(token: string): Promise<MyStats> {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("탐험률 조회 실패");
+  return res.json();
+}
+
+export async function fetchRankings(token: string): Promise<Rankings> {
+  const res = await fetch(`${API_URL}/rankings`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("랭킹 조회 실패");
   return res.json();
 }
 

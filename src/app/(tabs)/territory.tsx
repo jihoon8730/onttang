@@ -1,5 +1,6 @@
 import RegionExplorationRate from "@/components/territory/RegionExplorationRate";
 import StampSeal, { EmptySeal } from "@/components/territory/StampSeal";
+import { MyStamp } from "@/types/stamp";
 import StatCards from "@/components/territory/StatCards";
 import {
   colors,
@@ -20,6 +21,18 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // 도장이 손으로 찍힌 느낌 — 인장마다 살짝 다른 기울기
 const SEAL_ROTATIONS = [-6, 5, 4, -5, 3, -4];
+
+// "다음 도장" 빈 슬롯 = 그리드 마지막에 붙이는 sentinel (실제 content_id와 충돌 안 나게)
+const NEXT_SLOT_ID = "__next_slot__";
+const NEXT_SLOT: MyStamp = {
+  content_id: NEXT_SLOT_ID,
+  title: "",
+  address: null,
+  image_url: null,
+  category: null,
+  visit_count: 0,
+  stamped_at: "",
+};
 
 export default function Territory() {
   const token = useAuthStore((s) => s.token);
@@ -71,7 +84,9 @@ export default function Territory() {
   return (
     <View style={[styles.dashboard, { paddingTop: insets.top + spacing.lg }]}>
       <FlashList
-        data={stamps ?? []}
+        data={
+          (stamps?.length ?? 0) > 0 ? [...stamps!, NEXT_SLOT] : stamps ?? []
+        }
         keyExtractor={(item) => item.content_id}
         contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
         ListHeaderComponent={
@@ -123,21 +138,16 @@ export default function Territory() {
         ListEmptyComponent={
           <Text style={styles.empty}>아직 탐험한 곳이 없어요</Text>
         }
-        ListFooterComponent={
-          (stamps?.length ?? 0) > 0 ? (
-            <View style={styles.footerRow}>
-              <View style={styles.footerCell}>
-                <EmptySeal />
-              </View>
-            </View>
-          ) : null
+        renderItem={({ item, index }) =>
+          item.content_id === NEXT_SLOT_ID ? (
+            <EmptySeal />
+          ) : (
+            <StampSeal
+              stamp={item}
+              rotate={SEAL_ROTATIONS[index % SEAL_ROTATIONS.length]}
+            />
+          )
         }
-        renderItem={({ item, index }) => (
-          <StampSeal
-            stamp={item}
-            rotate={SEAL_ROTATIONS[index % SEAL_ROTATIONS.length]}
-          />
-        )}
       />
     </View>
   );
@@ -254,6 +264,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     padding: spacing.xl,
   },
-  footerRow: { flexDirection: "row" },
-  footerCell: { width: "25%" },
 });

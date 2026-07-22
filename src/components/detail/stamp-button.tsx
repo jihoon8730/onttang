@@ -99,6 +99,7 @@ export default function StampButton({ contentId, latitude, longitude }: Props) {
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ["my-stamps"] });
         queryClient.invalidateQueries({ queryKey: ["my-stats"] });
+        queryClient.invalidateQueries({ queryKey: ["rankings"] });
         if (data.visit_count === 1) {
           showModal("탐험 성공!", "새로운 영토를 발견했습니다", "success");
         } else {

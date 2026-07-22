@@ -1,7 +1,7 @@
 from math import radians, sin, cos, asin, sqrt
 from sqlalchemy import select, func
 from database import SessionLocal
-from models import Stamp, Attraction
+from models import Stamp, Attraction, User
 from constants import CATEGORY_LABELS, REGION_LABELS
 
 STAMP_RADIUS_M = 200  # 이 반경(m) 안에서만 스탬프 허용
@@ -137,3 +137,38 @@ def create_stamp(user_id: int, content_id: str, lat: float, lng: float) -> dict:
             "content_id": stamp.content_id,
             "visit_count": stamp.visit_count,
         }
+
+
+def get_rankings(current_user_id: int, limit: int = 100) -> dict:
+    """유저별 스탬프 수로 랭킹. 상위 목록 + 내 순위(목록 밖이어도) 반환."""
+    with SessionLocal() as session:
+        stamp_count = func.count(Stamp.id)
+        stmt = (
+            select(
+                User.id,
+                User.nickname,
+                User.profile_image,
+                stamp_count.label("stamp_count"),
+                # 동점은 같은 순위(예: 42개 2명 → 둘 다 1위, 다음 3위)
+                func.rank().over(order_by=stamp_count.desc()).label("rank"),
+            )
+            .join(Stamp, Stamp.user_id == User.id)  # 스탬프 1개 이상인 유저만
+            .group_by(User.id)
+            .order_by(stamp_count.desc())
+        )
+        rows = session.execute(stmt).all()
+
+    rankings = [
+        {
+            "rank": r.rank,
+            "user_id": r.id,
+            "nickname": r.nickname,
+            "profile_image": r.profile_image,
+            "stamp_count": r.stamp_count,
+            "is_me": r.id == current_user_id,
+        }
+        for r in rows
+    ]
+    # 내 순위는 상위 목록 밖일 수 있으니 전체에서 따로 뽑아 둠 (스탬프 없으면 None)
+    me = next((row for row in rankings if row["is_me"]), None)
+    return {"rankings": rankings[:limit], "me": me}
