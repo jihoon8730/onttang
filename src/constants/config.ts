@@ -6,4 +6,8 @@ import Constants from "expo-constants";
 export const DEV_HOST =
   Constants.expoConfig?.hostUri?.split(":")[0] ?? "localhost";
 
-export const API_URL = `http://${DEV_HOST}:8000`;
+// 프로덕션(빌드된 앱)이 바라볼 Railway 서버 (반드시 https)
+const PROD_API_URL = "https://onttang-production.up.railway.app";
+
+// 개발(Metro, __DEV__=true) = 로컬 서버 / 배포된 앱(__DEV__=false) = Railway
+export const API_URL = __DEV__ ? `http://${DEV_HOST}:8000` : PROD_API_URL;
