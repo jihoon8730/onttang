@@ -17,6 +17,19 @@ async def kakao_login(body: KakaoLoginIn):
     return await auth_service.login_with_kakao(body.code, body.redirect_uri)
 
 
+class AppleLoginIn(BaseModel):
+    identity_token: str
+    full_name: str | None = None  # 애플이 첫 로그인 때만 이름을 줌
+
+
+@router.post("/apple")
+def apple_login(body: AppleLoginIn):
+    try:
+        return auth_service.login_with_apple(body.identity_token, body.full_name)
+    except Exception:
+        raise HTTPException(status_code=401, detail="애플 로그인 검증 실패")
+
+
 bearer = HTTPBearer()
 
 

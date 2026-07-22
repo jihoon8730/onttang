@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     kakao_client_secret: str
     kakao_redirect_uri: str
     jwt_secret: str
+    # 애플 로그인 토큰(identityToken)의 audience = 앱 번들ID
+    apple_bundle_id: str = "com.jihoon8730.onttang"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
