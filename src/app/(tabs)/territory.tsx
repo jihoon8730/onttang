@@ -1,25 +1,22 @@
 import RegionExplorationRate from "@/components/territory/RegionExplorationRate";
 import StampSeal, { EmptySeal } from "@/components/territory/StampSeal";
 import StatCards from "@/components/territory/StatCards";
-import { API_URL, DEV_HOST } from "@/constants/config";
-import { colors, fontMono, radius, spacing, typography } from "@/constants/theme";
+import {
+  colors,
+  fontMono,
+  radius,
+  spacing,
+  typography,
+} from "@/constants/theme";
+import { useKakaoLogin } from "@/hooks/use-kakao-login";
 import { fetchMyStamps, fetchMyStats } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
-import { AuthRequest, makeRedirectUri } from "expo-auth-session";
-import * as WebBrowser from "expo-web-browser";
+import { SymbolView } from "expo-symbols";
+import LottieView from "lottie-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-//카카오 인증서버 주소록
-const discovery = {
-  authorizationEndpoint: "https://kauth.kakao.com/oauth/authorize",
-  tokenEndpoint: "https://kauth.kakao.com/oauth/token",
-};
-
-const KAKAO_REST_KEY = "f7e7cb7e5451452f6be83f1d5e2066b9";
-const KAKAO_REDIRECT_URI = `http://${DEV_HOST}:8081/kakao-bridge.html`;
 
 // 도장이 손으로 찍힌 느낌 — 인장마다 살짝 다른 기울기
 const SEAL_ROTATIONS = [-6, 5, 4, -5, 3, -4];
@@ -27,7 +24,7 @@ const SEAL_ROTATIONS = [-6, 5, 4, -5, 3, -4];
 export default function Territory() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
+  const { startLogin } = useKakaoLogin();
 
   const insets = useSafeAreaInsets();
 
@@ -43,48 +40,29 @@ export default function Territory() {
     enabled: !!token,
   });
 
-  const redirectUri = makeRedirectUri({
-    scheme: "onttang", // 앱 스키마
-    path: "oauth/kakao", // 리다이렉트 경로
-  });
-
-  async function startLogin() {
-    const request = new AuthRequest({
-      clientId: KAKAO_REST_KEY,
-      redirectUri: KAKAO_REDIRECT_URI, // 카카오엔 브리지 주소를 줌
-      scopes: [],
-      usePKCE: false,
-    });
-
-    const authUrl = await request.makeAuthUrlAsync(discovery);
-
-    const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
-
-    if (result.type !== "success" || !result.url) return;
-
-    const code = result.url.match(/[?&]code=([^&]+)/)?.[1];
-    if (!code) return;
-
-    const res = await fetch(`${API_URL}/auth/kakao`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ code, redirect_uri: KAKAO_REDIRECT_URI }),
-    });
-    const data = await res.json();
-    await login(data.token, data.user);
-  }
-
   if (!token) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.gateTitle}>내 영토</Text>
+      <View style={styles.gateContainer}>
+        <View style={styles.gateIllustration}>
+          <LottieView
+            source={require("../../assets/lottie/map.json")}
+            autoPlay
+            loop
+            style={{ width: 120, height: 120 }}
+          />
+          <View style={styles.gateBadge}>
+            <SymbolView name="checkmark.seal.fill" size={24} tintColor={colors.white} />
+          </View>
+        </View>
+
+        <Text style={styles.gateTitle}>나만의 탐험 지도</Text>
         <Text style={styles.gateHint}>
-          로그인하고 전국에 내 스탬프를 남겨보세요
+          로그인하고 전국 방방곡곡의{"\n"}특별한 장소들을 수집해 보세요
         </Text>
-        <Pressable onPress={startLogin} style={styles.loginButton}>
-          <Text style={styles.loginText}>카카오 로그인</Text>
+
+        <Pressable onPress={startLogin} style={styles.kakaoButton}>
+          <SymbolView name="message.fill" size={18} tintColor="#000000" style={styles.kakaoIcon} />
+          <Text style={styles.kakaoText}>카카오 로그인</Text>
         </Pressable>
       </View>
     );
@@ -104,7 +82,8 @@ export default function Territory() {
               </Text>
               <Text style={styles.heroTitle}>
                 전국{" "}
-                <Text style={styles.heroAccent}>{stats?.stamped ?? 0}곳</Text>을{"\n"}
+                <Text style={styles.heroAccent}>{stats?.stamped ?? 0}곳</Text>을
+                {"\n"}
                 탐험했어요
               </Text>
               <View style={styles.nation}>
@@ -133,9 +112,7 @@ export default function Territory() {
             ) : null}
 
             {/* 지역별 탐험률 */}
-            {stats ? (
-              <RegionExplorationRate regions={stats.regions} />
-            ) : null}
+            {stats ? <RegionExplorationRate regions={stats.regions} /> : null}
 
             <Text style={styles.listHeader}>
               탐험한 곳 {stamps?.length ?? 0}곳
@@ -156,7 +133,10 @@ export default function Territory() {
           ) : null
         }
         renderItem={({ item, index }) => (
-          <StampSeal stamp={item} rotate={SEAL_ROTATIONS[index % SEAL_ROTATIONS.length]} />
+          <StampSeal
+            stamp={item}
+            rotate={SEAL_ROTATIONS[index % SEAL_ROTATIONS.length]}
+          />
         )}
       />
     </View>
@@ -164,24 +144,66 @@ export default function Territory() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gateContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.md,
     padding: spacing.xl,
     backgroundColor: colors.background,
   },
-  gateTitle: { ...typography.header, fontSize: 24 },
-  gateHint: { ...typography.body, color: colors.muted, textAlign: "center" },
-  loginButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 14,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radius.button,
-    marginTop: spacing.md,
+  gateIllustration: {
+    width: 140,
+    height: 140,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xl,
   },
-  loginText: { color: colors.white, fontWeight: "700", fontSize: 15 },
+  gateBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.accentDark,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 4,
+    borderColor: colors.background,
+  },
+  gateTitle: { 
+    ...typography.title,
+    fontSize: 28,
+    color: colors.ink,
+    marginBottom: spacing.sm,
+    textAlign: "center",
+  },
+  gateHint: { 
+    ...typography.body, 
+    color: colors.muted, 
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: spacing.xl * 1.5,
+  },
+  kakaoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEE500", // 카카오 공식 옐로우
+    paddingVertical: 16,
+    paddingHorizontal: spacing.xl,
+    width: "100%",
+    borderRadius: radius.button,
+    gap: 8,
+  },
+  kakaoIcon: {
+    opacity: 0.85,
+  },
+  kakaoText: { 
+    color: "rgba(0, 0, 0, 0.85)", 
+    fontWeight: "700", 
+    fontSize: 16,
+  },
   dashboard: { flex: 1, backgroundColor: colors.background },
   hero: {
     paddingHorizontal: spacing.lg,
@@ -209,8 +231,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chip,
     overflow: "hidden",
   },
-  meterFill: { height: "100%", borderRadius: 999, backgroundColor: colors.accent },
-  nationPct: { fontFamily: fontMono, fontSize: 12, color: colors.muted, fontWeight: "600" },
+  meterFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: colors.accent,
+  },
+  nationPct: {
+    fontFamily: fontMono,
+    fontSize: 12,
+    color: colors.muted,
+    fontWeight: "600",
+  },
   listHeader: {
     ...typography.body,
     fontWeight: "600",

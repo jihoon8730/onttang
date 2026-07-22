@@ -20,6 +20,10 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Icon sf="flag.fill" md="flag" />
         <NativeTabs.Trigger.Label>내 영토</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="more">
+        <NativeTabs.Trigger.Icon sf="ellipsis" md="more-horiz" />
+        <NativeTabs.Trigger.Label>더보기</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

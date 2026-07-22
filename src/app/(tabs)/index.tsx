@@ -2,9 +2,19 @@ import AttractionListItem from "@/components/map/attraction-list-item";
 import MapSearchOverlay from "@/components/map/map-search-overlay";
 import MyLocationButton from "@/components/map/my-location-button";
 import { API_URL } from "@/constants/config";
-import { colors, fontMono, spacing, typography } from "@/constants/theme";
+import {
+  colors,
+  fontMono,
+  radius,
+  spacing,
+  typography,
+} from "@/constants/theme";
 import { useMyLocation } from "@/hooks/use-my-location";
-import { fetchAttractionDetail, fetchAttractions, fetchMyStamps } from "@/lib/api";
+import {
+  fetchAttractionDetail,
+  fetchAttractions,
+  fetchMyStamps,
+} from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { useFilterStore } from "@/stores/use-filter-store";
 import { Attraction } from "@/types/attraction";
@@ -19,6 +29,7 @@ import {
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -260,7 +271,6 @@ export default function Index() {
           mapPadding={mapPadding}
           minZoom={6}
           maxZoom={18}
-          useTextureView={true}
           onCameraIdle={(args) => {
             setRegion(args.region);
             listRef.current?.scrollToTop({ animated: false });
@@ -277,6 +287,9 @@ export default function Index() {
               markers: clusterMarkers,
               screenDistance: 70,
               animate: true,
+              width: 40,
+              height: 40,
+              maxZoom: 13, //클러스트 묶음 범위
             },
           ]}
           onTapClusterLeaf={({ markerIdentifier }) => {
@@ -299,6 +312,8 @@ export default function Index() {
         enableDynamicSizing={false}
         enableContentPanningGesture={false}
         keyboardBehavior="interactive"
+        backgroundStyle={styles.sheetBackground}
+        handleIndicatorStyle={styles.sheetHandle}
       >
         <FlashList
           ref={listRef}
@@ -308,9 +323,21 @@ export default function Index() {
           estimatedItemSize={110}
           ListHeaderComponent={
             <View style={styles.sheetHead}>
-              <Text style={styles.sheetEyebrow}>이 지역</Text>
-              <Text style={styles.sheetCount}>{listData.length}</Text>
-              <Text style={styles.sheetOf}>곳</Text>
+              <View style={styles.sheetHeaderLeft}>
+                <View style={styles.sheetIconWrapper}>
+                  <SymbolView
+                    name="map.fill"
+                    size={16}
+                    tintColor={colors.accent}
+                    type="hierarchical"
+                  />
+                </View>
+                <Text style={styles.sheetEyebrow}>주변 탐험지</Text>
+              </View>
+              <View style={styles.sheetCountRow}>
+                <Text style={styles.sheetCount}>{listData.length}</Text>
+                <Text style={styles.sheetOf}>곳</Text>
+              </View>
             </View>
           }
           renderItem={renderItem}
@@ -347,22 +374,67 @@ const styles = StyleSheet.create({
   mapSection: { flex: 1 },
   map: { flex: 1 },
   list: { flex: 1, backgroundColor: colors.background },
+  sheetBackground: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  sheetHandle: {
+    backgroundColor: "#E0DCD6",
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    marginTop: spacing.xs,
+  },
   sheetHead: {
     flexDirection: "row",
-    alignItems: "baseline",
-    gap: 6,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xs,
     paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline,
+    marginBottom: spacing.xs,
   },
-  sheetEyebrow: { ...typography.meta, color: colors.muted },
+  sheetHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  sheetIconWrapper: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.accentSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetEyebrow: {
+    ...typography.body,
+    fontWeight: "700",
+    color: colors.ink,
+  },
+  sheetCountRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 2,
+  },
   sheetCount: {
     fontFamily: fontMono,
-    fontSize: 20,
-    fontWeight: "800",
+    fontSize: 22,
+    fontWeight: "900",
     color: colors.accent,
   },
-  sheetOf: { ...typography.meta, color: colors.muted },
+  sheetOf: {
+    ...typography.meta,
+    color: colors.muted,
+  },
   overlay: {
     position: "absolute",
     top: 0,

@@ -33,3 +33,10 @@ def me(user_id: int = Depends(get_current_user_id)):
     if user is None:
         raise HTTPException(status_code=404, detail="유저 없음")
     return user
+
+
+@router.delete("/me", status_code=204)
+def delete_me(user_id: int = Depends(get_current_user_id)):
+    deleted = auth_service.delete_user(user_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="유저 없음")

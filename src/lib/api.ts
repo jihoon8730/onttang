@@ -31,3 +31,11 @@ export async function fetchMyStats(token: string): Promise<MyStats> {
   if (!res.ok) throw new Error("탐험률 조회 실패");
   return res.json();
 }
+
+export async function deleteAccount(token: string): Promise<void> {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("회원 탈퇴 실패");
+}

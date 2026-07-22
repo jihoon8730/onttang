@@ -4,7 +4,11 @@ import { create } from "zustand";
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 
-export type User = { id: number; nickname: string };
+export type User = {
+  id: number;
+  nickname: string;
+  profile_image: string | null;
+};
 
 type AuthState = {
   token: string | null;

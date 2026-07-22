@@ -27,13 +27,13 @@ function AttractionListItem({
       style={[styles.box, selected && styles.boxSelected]}
       onPress={() => onPress(attraction)}
     >
-      <View style={styles.thumbWrap}>
+      <View style={[styles.thumbRing, selected && styles.thumbRingSelected]}>
         <Image
           style={styles.image}
           source={attraction.image_url}
           contentFit="cover"
         />
-        {/* 이미 탐험한(도장 찍은) 곳 표시 — 내 영토 여권과 같은 모티프 */}
+        {/* 이미 탐험한(도장 찍은) 곳 표시 */}
         {stamped ? (
           <View style={styles.seal}>
             <Text style={styles.sealFlag}>⚑</Text>
@@ -42,7 +42,11 @@ function AttractionListItem({
       </View>
 
       <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+        <Text
+          style={[styles.title, selected && styles.titleSelected]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
           {attraction.title}
         </Text>
         <View style={styles.metaRow}>
@@ -63,17 +67,23 @@ function AttractionListItem({
         </View>
       </View>
 
-      {/* 상세로 — 은은한 셰브론 */}
+      {/* 상세로 — 선택 시 예쁜 '탐험' 버튼으로 변신 */}
       <Pressable
         onPress={() => onExplore(attraction)}
         hitSlop={10}
-        style={styles.chevron}
+        style={styles.exploreBtn}
       >
-        <SymbolView
-          name={{ ios: "chevron.right", android: "chevron_right" }}
-          size={16}
-          tintColor={colors.muted}
-        />
+        {selected ? (
+          <View style={styles.exploreBtnSelected}>
+            <SymbolView name="chevron.right" size={14} weight="bold" tintColor={colors.accent} style={{ marginLeft: 1 }} />
+          </View>
+        ) : (
+          <SymbolView
+            name="chevron.right"
+            size={16}
+            tintColor={colors.muted}
+          />
+        )}
       </Pressable>
     </Pressable>
   );
@@ -83,16 +93,30 @@ const styles = StyleSheet.create({
   box: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    backgroundColor: "transparent",
   },
-  boxSelected: { backgroundColor: colors.accentSoft },
-  thumbWrap: { width: 56, height: 56 },
+  boxSelected: {
+    backgroundColor: "rgba(0,0,0,0.02)", // 아주 미세한 음영만
+  },
+  thumbRing: {
+    width: 62,
+    height: 62,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  thumbRingSelected: {
+    borderColor: colors.accent,
+  },
   image: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
+    width: 54,
+    height: 54,
+    borderRadius: 16,
     backgroundColor: colors.chip,
   },
   seal: {
@@ -112,6 +136,7 @@ const styles = StyleSheet.create({
   sealFlag: { fontSize: 12, color: colors.accentDark },
   info: { flex: 1, gap: 3 },
   title: { ...typography.body, fontWeight: "700", color: colors.ink },
+  titleSelected: { color: colors.accent, fontWeight: "800" },
   metaRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   chip: {
     backgroundColor: colors.chip,
@@ -122,7 +147,21 @@ const styles = StyleSheet.create({
   chipText: { ...typography.chip, color: colors.muted },
   address: { ...typography.meta, color: colors.muted, flex: 1 },
   done: { ...typography.meta, color: colors.accentDark, fontWeight: "700" },
-  chevron: { paddingLeft: spacing.xs },
+  exploreBtn: {
+    paddingLeft: spacing.sm,
+    justifyContent: "center",
+    alignItems: "center",
+    height: 32,
+    width: 32, // 일정한 공간 차지
+  },
+  exploreBtnSelected: {
+    width: 30,
+    height: 30,
+    backgroundColor: colors.accentSoft,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
 
 export default memo(AttractionListItem);

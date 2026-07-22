@@ -20,6 +20,10 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="attraction/[id]" />
           <Stack.Screen name="search" />
+          <Stack.Screen
+            name="legal"
+            options={{ headerShown: true, title: "약관 및 정책" }}
+          />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>

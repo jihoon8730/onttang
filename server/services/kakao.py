@@ -33,5 +33,5 @@ async def get_kakao_user(access_token: str) -> dict:
     return {
         "provider_user_id": str(data["id"]),
         "nickname": profile.get("nickname"),
-        "profile_image": profile.get("profile_image_url"),
+        "profile_image": (profile.get("profile_image_url") or "").replace("http://", "https://") or None,
     }
