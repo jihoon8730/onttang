@@ -33,9 +33,11 @@ export async function fetchMyStats(token: string): Promise<MyStats> {
   return res.json();
 }
 
-export async function fetchRankings(token: string): Promise<Rankings> {
+export async function fetchRankings(
+  token?: string | null,
+): Promise<Rankings> {
   const res = await fetch(`${API_URL}/rankings`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
   if (!res.ok) throw new Error("랭킹 조회 실패");
   return res.json();

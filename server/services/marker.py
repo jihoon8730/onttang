@@ -5,8 +5,8 @@ from PIL import Image, ImageDraw
 # 합성된 마커를 재사용 (src+selected 별로 1회만 생성)
 _cache: dict[tuple[str, bool], bytes] = {}
 
-ACCENT = (232, 100, 60, 255)  # #E8643C
-ACCENT_DARK = (184, 67, 31, 255)  # #B8431F (선택)
+ACCENT = (47, 122, 85, 255)  # #2F7A55
+ACCENT_DARK = (31, 91, 61, 255)  # #1F5B3D (선택)
 
 
 def _cover_circle(photo: Image.Image, size: int) -> Image.Image:

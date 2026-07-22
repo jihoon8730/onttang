@@ -24,6 +24,7 @@ export default function RootLayout() {
             name="legal"
             options={{ headerShown: true, title: "약관 및 정책" }}
           />
+          <Stack.Screen name="login" options={{ presentation: "modal" }} />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>

@@ -1,14 +1,14 @@
-import { Platform } from "react-native";
 import type { TextStyle } from "react-native";
+import { Platform } from "react-native";
 
 // 데이터·날짜용 모노스페이스 (여권/장부 레지스터 느낌)
 export const fontMono = Platform.select({ ios: "Menlo", default: "monospace" });
 
 // 색상 토큰
 export const colors = {
-  accent: "#E8643C", // 스탬프·CTA·브랜드
-  accentDark: "#b8431f", // 버튼 눌림 그림자
-  accentSoft: "#fdeee7", // 선택 행 배경
+  accent: "#2F7A55", // 스탬프·CTA·브랜드
+  accentDark: "#1F5B3D", // 버튼 눌림 그림자
+  accentSoft: "#E6F1EA", // 선택 행 배경
   ink: "#2b2b2b", // 본문
   muted: "#9a958c", // 보조 텍스트
   hairline: "#efece6", // 구분선/테두리
@@ -35,7 +35,7 @@ export const radius = { card: 12, sheet: 22, button: 12, chip: 12 } as const;
 export const shadow = {
   card: "0 4px 14px -10px rgba(0,0,0,0.2)",
   sheet: "0 -8px 30px -8px rgba(0,0,0,0.2)",
-  buttonPressed: "0 4px 0 #b8431f",
+  buttonPressed: "0 4px 0 #1F5B3D",
 } as const;
 
 // 지도 위 카드/버튼 그림자 (RN shadow* + Android elevation)

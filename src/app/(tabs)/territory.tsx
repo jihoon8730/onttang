@@ -9,7 +9,7 @@ import {
   spacing,
   typography,
 } from "@/constants/theme";
-import { useKakaoLogin } from "@/hooks/use-kakao-login";
+import { useRouter } from "expo-router";
 import { fetchMyStamps, fetchMyStats } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { FlashList } from "@shopify/flash-list";
@@ -37,7 +37,7 @@ const NEXT_SLOT: MyStamp = {
 export default function Territory() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
-  const { startLogin } = useKakaoLogin();
+  const router = useRouter();
 
   const insets = useSafeAreaInsets();
 
@@ -73,9 +73,8 @@ export default function Territory() {
           로그인하고 전국 방방곡곡의{"\n"}특별한 장소들을 수집해 보세요
         </Text>
 
-        <Pressable onPress={startLogin} style={styles.kakaoButton}>
-          <SymbolView name="message.fill" size={18} tintColor="#000000" style={styles.kakaoIcon} />
-          <Text style={styles.kakaoText}>카카오 로그인</Text>
+        <Pressable onPress={() => router.push("/login")} style={styles.kakaoButton}>
+          <Text style={styles.kakaoText}>로그인하기</Text>
         </Pressable>
       </View>
     );
@@ -199,7 +198,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FEE500", // 카카오 공식 옐로우
+    backgroundColor: colors.accent,
     paddingVertical: 16,
     paddingHorizontal: spacing.xl,
     width: "100%",
@@ -210,7 +209,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   kakaoText: { 
-    color: "rgba(0, 0, 0, 0.85)", 
+    color: colors.white, 
     fontWeight: "700", 
     fontSize: 16,
   },

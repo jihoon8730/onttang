@@ -139,7 +139,7 @@ def create_stamp(user_id: int, content_id: str, lat: float, lng: float) -> dict:
         }
 
 
-def get_rankings(current_user_id: int, limit: int = 100) -> dict:
+def get_rankings(current_user_id: int | None, limit: int = 100) -> dict:
     """유저별 스탬프 수로 랭킹. 상위 목록 + 내 순위(목록 밖이어도) 반환."""
     with SessionLocal() as session:
         stamp_count = func.count(Stamp.id)

@@ -1,5 +1,4 @@
 import { colors, radius, spacing, typography } from "@/constants/theme";
-import { useKakaoLogin } from "@/hooks/use-kakao-login";
 import { deleteAccount } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { useRouter } from "expo-router";
@@ -17,7 +16,6 @@ export default function More() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const { startLogin } = useKakaoLogin();
   const router = useRouter();
 
   const insets = useSafeAreaInsets();
@@ -62,14 +60,8 @@ export default function More() {
           로그인하고 내 정보와{"\n"}앱 설정을 관리해 보세요
         </Text>
 
-        <Pressable onPress={startLogin} style={styles.kakaoButton}>
-          <SymbolView
-            name="message.fill"
-            size={18}
-            tintColor="#000000"
-            style={styles.kakaoIcon}
-          />
-          <Text style={styles.kakaoText}>카카오 로그인</Text>
+        <Pressable onPress={() => router.push("/login")} style={styles.kakaoButton}>
+          <Text style={styles.kakaoText}>로그인하기</Text>
         </Pressable>
       </View>
     );
@@ -224,7 +216,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FEE500",
+    backgroundColor: colors.accent,
     paddingVertical: 16,
     paddingHorizontal: spacing.xl,
     width: "100%",
@@ -235,7 +227,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   kakaoText: {
-    color: "rgba(0, 0, 0, 0.85)",
+    color: colors.white,
     fontWeight: "700",
     fontSize: 16,
   },

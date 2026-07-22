@@ -1,11 +1,17 @@
-import { colors, fontMono, radius, spacing, typography } from "@/constants/theme";
-import { useKakaoLogin } from "@/hooks/use-kakao-login";
+import {
+  colors,
+  fontMono,
+  radius,
+  spacing,
+  typography,
+} from "@/constants/theme";
 import { fetchRankings } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { RankingEntry } from "@/types/ranking";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import LottieView from "lottie-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -24,12 +30,18 @@ const comma = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 function Avatar({ entry, mine }: { entry: RankingEntry; mine?: boolean }) {
   if (entry.profile_image) {
     return (
-      <Image style={styles.avatar} source={entry.profile_image} contentFit="cover" />
+      <Image
+        style={styles.avatar}
+        source={entry.profile_image}
+        contentFit="cover"
+      />
     );
   }
   const initial = (entry.nickname ?? "?").trim().charAt(0) || "?";
   return (
-    <View style={[styles.avatar, styles.avatarFallback, mine && styles.avatarMine]}>
+    <View
+      style={[styles.avatar, styles.avatarFallback, mine && styles.avatarMine]}
+    >
       <Text style={[styles.avatarInitial, mine && styles.avatarInitialMine]}>
         {initial}
       </Text>
@@ -51,7 +63,10 @@ function RankRow({ entry }: { entry: RankingEntry }) {
       )}
       <Avatar entry={entry} />
       <View style={styles.info}>
-        <Text style={[styles.name, !isTop3 && styles.nameDim]} numberOfLines={1}>
+        <Text
+          style={[styles.name, !isTop3 && styles.nameDim]}
+          numberOfLines={1}
+        >
           {entry.nickname ?? "익명의 탐험가"}
         </Text>
         <Text style={styles.count}>{comma(entry.stamp_count)}곳</Text>
@@ -78,7 +93,11 @@ function MeRow({ entry }: { entry: RankingEntry }) {
 function ChampionAvatar({ entry }: { entry: RankingEntry }) {
   if (entry.profile_image) {
     return (
-      <Image style={styles.champAvatar} source={entry.profile_image} contentFit="cover" />
+      <Image
+        style={styles.champAvatar}
+        source={entry.profile_image}
+        contentFit="cover"
+      />
     );
   }
   const initial = (entry.nickname ?? "?").trim().charAt(0) || "?";
@@ -106,7 +125,8 @@ function ChampionCard({ entry }: { entry: RankingEntry }) {
         {entry.nickname ?? "익명의 탐험가"}
       </Text>
       <Text style={styles.champCountRow}>
-        <Text style={styles.champCount}>{comma(entry.stamp_count)}</Text> 곳 개척
+        <Text style={styles.champCount}>{comma(entry.stamp_count)}</Text> 곳
+        개척
       </Text>
     </View>
   );
@@ -114,37 +134,13 @@ function ChampionCard({ entry }: { entry: RankingEntry }) {
 
 export default function Ranking() {
   const token = useAuthStore((s) => s.token);
-  const { startLogin } = useKakaoLogin();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const { data } = useQuery({
-    queryKey: ["rankings"],
-    queryFn: () => fetchRankings(token!),
-    enabled: !!token,
+    queryKey: ["rankings", token],
+    queryFn: () => fetchRankings(token),
   });
-
-  if (!token) {
-    return (
-      <View style={styles.gateContainer}>
-        <View style={styles.gateBadge}>
-          <SymbolView name="trophy.fill" size={44} tintColor={colors.accent} />
-        </View>
-        <Text style={styles.gateTitle}>탐험가 랭킹</Text>
-        <Text style={styles.gateHint}>
-          로그인하고 다른 탐험가들과{"\n"}개척한 관광지 수를 겨뤄 보세요
-        </Text>
-        <Pressable onPress={startLogin} style={styles.kakaoButton}>
-          <SymbolView
-            name="message.fill"
-            size={18}
-            tintColor="#000000"
-            style={styles.kakaoIcon}
-          />
-          <Text style={styles.kakaoText}>카카오 로그인</Text>
-        </Pressable>
-      </View>
-    );
-  }
 
   const rankings = data?.rankings ?? [];
   const me = data?.me ?? null;
@@ -171,7 +167,9 @@ export default function Ranking() {
           champ ? (
             <View>
               <ChampionCard entry={champ} />
-              {rest.length > 0 && <Text style={styles.sectionLabel}>전체 순위</Text>}
+              {rest.length > 0 && (
+                <Text style={styles.sectionLabel}>전체 순위</Text>
+              )}
             </View>
           ) : null
         }
@@ -184,12 +182,32 @@ export default function Ranking() {
         }
       />
 
-      {me && (
-        <View style={[styles.myBanner, { paddingBottom: insets.bottom + spacing.md }]}>
+      {me ? (
+        <View
+          style={[
+            styles.myBanner,
+            { paddingBottom: insets.bottom + spacing.md },
+          ]}
+        >
           <Text style={styles.myBannerLabel}>내 순위</Text>
           <MeRow entry={me} />
         </View>
-      )}
+      ) : !token ? (
+        <View
+          style={[
+            styles.myBanner,
+            { paddingBottom: insets.bottom + spacing.md },
+          ]}
+        >
+          <Pressable
+            onPress={() => router.push("/login")}
+            style={styles.loginCta}
+          >
+            <SymbolView name="person.fill" size={16} tintColor={colors.white} />
+            <Text style={styles.loginCtaText}>로그인하고 순위 겨루기</Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -271,7 +289,12 @@ const styles = StyleSheet.create({
   avatarInitial: { fontSize: 16, fontWeight: "800", color: colors.muted },
   avatarInitialMine: { color: colors.accent },
   info: { flex: 1, minWidth: 0, gap: 2 },
-  name: { fontSize: 16, fontWeight: "700", color: colors.ink, letterSpacing: -0.2 },
+  name: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.ink,
+    letterSpacing: -0.2,
+  },
   nameDim: { fontWeight: "600", color: colors.muted },
   count: { fontFamily: fontMono, fontSize: 12, color: colors.muted },
 
@@ -396,52 +419,19 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
-  // login gate
-  gateContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xl,
-    backgroundColor: colors.background,
-  },
-  gateBadge: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: colors.accentSoft,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.xl,
-  },
-  gateTitle: {
-    ...typography.title,
-    fontSize: 28,
-    color: colors.ink,
-    marginBottom: spacing.sm,
-    textAlign: "center",
-  },
-  gateHint: {
-    ...typography.body,
-    color: colors.muted,
-    textAlign: "center",
-    lineHeight: 24,
-    marginBottom: spacing.xl * 1.5,
-  },
-  kakaoButton: {
+  // 비로그인 하단 로그인 CTA
+  loginCta: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FEE500",
-    paddingVertical: 16,
-    paddingHorizontal: spacing.xl,
-    width: "100%",
-    borderRadius: radius.button,
     gap: 8,
+    backgroundColor: colors.accent,
+    paddingVertical: 12,
+    borderRadius: radius.button,
   },
-  kakaoIcon: { opacity: 0.85 },
-  kakaoText: {
-    color: "rgba(0, 0, 0, 0.85)",
+  loginCtaText: {
+    color: colors.white,
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 15,
   },
 });
