@@ -96,7 +96,7 @@ export default function Index() {
   const [sheetIndex, setSheetIndex] = useState(SHEET_INITIAL_INDEX);
 
   // --- 내 위치 (커스텀 훅) ---
-  const { myLocation, pulseRadius, showMyLocation } = useMyLocation(mapRef);
+  const { myLocation, heading, showMyLocation } = useMyLocation(mapRef);
 
   // --- 서버 데이터 ---
   const {
@@ -243,6 +243,7 @@ export default function Index() {
       queryClient.prefetchQuery({
         queryKey: ["attraction-detail", selectedId],
         queryFn: () => fetchAttractionDetail(selectedId),
+        staleTime: 1000 * 60 * 30,
       });
     }
   }, [selectedId, queryClient]);
@@ -291,7 +292,11 @@ export default function Index() {
           locationOverlay={{
             isVisible: myLocation !== null,
             position: myLocation ?? INITIAL_CAMERA,
-            circleRadius: pulseRadius,
+            bearing: heading,
+            image: require("../../../assets/images/location-arrow.png"),
+            imageWidth: 28,
+            imageHeight: 28,
+            circleRadius: 16,
             circleColor: "#4285F433",
           }}
           clusters={[

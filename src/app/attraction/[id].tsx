@@ -45,6 +45,7 @@ export default function AttractionDetail() {
   const { data: detail, isLoading } = useQuery({
     queryKey: ["attraction-detail", id],
     queryFn: () => fetchAttractionDetail(id),
+    staleTime: 1000 * 60 * 30, // 상세 정보는 거의 안 바뀜 — 30분간 재요청 안 함
   });
 
   const attraction = attractions.find((a) => a.content_id === id);

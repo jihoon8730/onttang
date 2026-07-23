@@ -5,25 +5,19 @@ import { Platform } from "react-native";
 
 type Coords = { latitude: number; longitude: number };
 
-// 내 위치: 현재 좌표 가져오기 + 실시간 추적 + 표식 맥동 애니메이션.
+// 내 위치: 현재 좌표 가져오기 + 실시간 추적 + 나침반 방향(화살표 회전).
 export function useMyLocation(mapRef: RefObject<NaverMapViewRef | null>) {
   const [myLocation, setMyLocation] = useState<Coords | null>(null);
-  const [pulseRadius, setPulseRadius] = useState(20);
+  const [heading, setHeading] = useState(0);
   const locationSub = useRef<Location.LocationSubscription | null>(null);
+  const headingSub = useRef<Location.LocationSubscription | null>(null);
 
-  // 화면 떠날 때 위치 구독 정리 (배터리 절약)
+  // 화면 떠날 때 위치·방향 구독 정리 (배터리 절약)
   useEffect(() => {
     return () => {
       locationSub.current?.remove();
+      headingSub.current?.remove();
     };
-  }, []);
-
-  // 내 위치 표식 맥동 애니메이션 (원 반지름 5↔20 왕복)
-  useEffect(() => {
-    const id = setInterval(() => {
-      setPulseRadius((r) => (r >= 20 ? 5 : r + 1));
-    }, 60);
-    return () => clearInterval(id);
   }, []);
 
   // 권한 요청 → 현재 위치로 카메라 이동 → 이후 이동을 실시간 추적
@@ -54,11 +48,16 @@ export function useMyLocation(mapRef: RefObject<NaverMapViewRef | null>) {
           });
         },
       );
+
+      // 나침반 방향 추적 (trueHeading 미지원 기기는 magHeading으로 대체)
+      headingSub.current = await Location.watchHeadingAsync((data) => {
+        setHeading(data.trueHeading >= 0 ? data.trueHeading : data.magHeading);
+      });
     } catch (e) {
       // 위치 서비스 꺼짐/거부 등 — 크래시 대신 조용히 무시
       console.warn("내 위치를 가져오지 못했어요", e);
     }
   };
 
-  return { myLocation, pulseRadius, showMyLocation };
+  return { myLocation, heading, showMyLocation };
 }
