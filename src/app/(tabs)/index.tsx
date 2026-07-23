@@ -146,39 +146,51 @@ export default function Index() {
     );
   }, [region, filteredAttractions]);
 
-  // 전국 대표를 클러스터 마커로 (네이버 SDK가 줌에 따라 자동 클러스터링)
-  const clusterMarkers = useMemo(
-    () =>
-      filteredAttractions.map((a) => {
-        const selected = a.content_id === selectedId;
-        if (a.image_url) {
-          // 관광지 사진을 원형 마커로 (백엔드가 합성 + 캐시)
-          const url = `${API_URL}/markers?src=${encodeURIComponent(a.image_url)}${
-            selected ? "&selected=true" : ""
-          }`;
-          return {
-            identifier: a.content_id,
-            latitude: a.latitude,
-            longitude: a.longitude,
-            image: { httpUri: url },
-            width: selected ? 54 : 44,
-            height: selected ? 65 : 53,
-          };
-        }
-        // 사진 없으면 브랜드 핀으로 폴백
-        return {
-          identifier: a.content_id,
-          latitude: a.latitude,
-          longitude: a.longitude,
-          image: selected
-            ? require("../../../assets/images/marker-selected.png")
-            : require("../../../assets/images/marker.png"),
-          width: selected ? 34 : 28,
-          height: selected ? 42 : 35,
-        };
-      }),
-    [filteredAttractions, selectedId],
+  // 마커 객체 생성 (사진 있으면 백엔드 합성 원형 마커, 없으면 브랜드 핀 폴백)
+  const buildMarker = useCallback((a: Attraction, selected: boolean) => {
+    if (a.image_url) {
+      const url = `${API_URL}/markers?src=${encodeURIComponent(a.image_url)}${
+        selected ? "&selected=true" : ""
+      }`;
+      return {
+        identifier: a.content_id,
+        latitude: a.latitude,
+        longitude: a.longitude,
+        image: { httpUri: url },
+        width: selected ? 54 : 44,
+        height: selected ? 65 : 53,
+      };
+    }
+    return {
+      identifier: a.content_id,
+      latitude: a.latitude,
+      longitude: a.longitude,
+      image: selected
+        ? require("../../../assets/images/marker-selected.png")
+        : require("../../../assets/images/marker.png"),
+      width: selected ? 34 : 28,
+      height: selected ? 42 : 35,
+    };
+  }, []);
+
+  // 전국 대표를 클러스터 마커로 (네이버 SDK가 줌에 따라 자동 클러스터링).
+  // selectedId 변경 시 배열 전체가 아닌 "선택된 1개"만 새 객체로 교체해
+  // 나머지 마커의 참조를 그대로 유지 (불필요한 재요청·재diff 방지)
+  const baseMarkers = useMemo(
+    () => filteredAttractions.map((a) => buildMarker(a, false)),
+    [filteredAttractions, buildMarker],
   );
+
+  const clusterMarkers = useMemo(() => {
+    if (!selectedId) return baseMarkers;
+    const idx = filteredAttractions.findIndex(
+      (a) => a.content_id === selectedId,
+    );
+    if (idx === -1) return baseMarkers;
+    const next = baseMarkers.slice();
+    next[idx] = buildMarker(filteredAttractions[idx], true);
+    return next;
+  }, [baseMarkers, filteredAttractions, selectedId, buildMarker]);
 
   // 선택된(검색으로 고른) 장소를 리스트 맨 위로
   const listData = useMemo(() => {

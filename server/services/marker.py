@@ -1,9 +1,16 @@
+import asyncio
 import io
 import httpx
 from PIL import Image, ImageDraw
 
 # 합성된 마커를 재사용 (src+selected 별로 1회만 생성)
 _cache: dict[tuple[str, bool], bytes] = {}
+
+# 같은 마커가 여러 요청에서 동시에 캐시미스 나도 한 번만 생성하도록(thundering herd 방지)
+_locks: dict[tuple[str, bool], asyncio.Lock] = {}
+
+# 연결 재사용(매 요청마다 TLS 핸드셰이크 하지 않도록) — 프로세스 생존 기간 동안 유지
+_client = httpx.AsyncClient(timeout=15.0)
 
 ACCENT = (47, 122, 85, 255)  # #2F7A55
 ACCENT_DARK = (31, 91, 61, 255)  # #1F5B3D (선택)
@@ -50,17 +57,28 @@ def _compose(photo: Image.Image, selected: bool) -> bytes:
     return buf.getvalue()
 
 
+def _decode_and_compose(raw: bytes, selected: bool) -> bytes:
+    """CPU 연산(디코딩+크롭+합성) — 스레드에서 돌려 이벤트 루프를 막지 않는다."""
+    photo = Image.open(io.BytesIO(raw)).convert("RGB")
+    return _compose(photo, selected)
+
+
 async def build_marker(src: str, selected: bool) -> bytes:
     """원격 사진 → 원형 마커 PNG (캐시)."""
     key = (src, selected)
     if key in _cache:
         return _cache[key]
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        res = await client.get(src)
+    # 같은 키를 여러 요청이 동시에 미스해도 한 번만 생성 (나머지는 결과 대기)
+    lock = _locks.setdefault(key, asyncio.Lock())
+    async with lock:
+        if key in _cache:  # 락 기다리는 동안 다른 요청이 이미 만들어뒀을 수 있음
+            return _cache[key]
+
+        res = await _client.get(src)
         res.raise_for_status()
 
-    photo = Image.open(io.BytesIO(res.content)).convert("RGB")
-    png = _compose(photo, selected)
-    _cache[key] = png
-    return png
+        # Pillow는 CPU 바운드 동기 작업 — to_thread로 넘겨 다른 요청 처리를 막지 않음
+        png = await asyncio.to_thread(_decode_and_compose, res.content, selected)
+        _cache[key] = png
+        return png
