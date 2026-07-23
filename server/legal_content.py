@@ -1,10 +1,9 @@
-import { colors, spacing, typography } from "@/constants/theme";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+# 스토어(App Store·Google Play) 제출용 공개 약관·개인정보처리방침.
+# 내용은 src/app/legal.tsx(앱 내 표시용)와 동일하게 유지 — 한쪽을 고치면 반드시 다른 쪽도 갱신할 것.
 
-// TODO(배포 전): 아래 [대괄호] 항목(운영자·연락처·시행일)을 실제 값으로 교체할 것
-const EFFECTIVE_DATE = "2026년 7월 22일";
+EFFECTIVE_DATE = "2026년 7월 22일"
 
-const TERMS = `제1조 (목적)
+TERMS = """제1조 (목적)
 본 약관은 온땅(이하 "회사")이 제공하는 온땅 애플리케이션 및 관련 제반 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
 
 제2조 (정의)
@@ -51,9 +50,9 @@ const TERMS = `제1조 (목적)
 제10조 (준거법 및 관할)
 본 약관은 대한민국 법령에 따라 해석되며, 서비스 이용과 관련한 분쟁은 관련 법령이 정한 절차에 따른 법원을 관할로 합니다.
 
-문의: rec8730@gmail.com`;
+문의: rec8730@gmail.com"""
 
-const PRIVACY = `온땅(이하 "회사")은 이용자의 개인정보를 중요하게 생각하며, 「개인정보 보호법」 및 「위치정보의 보호 및 이용 등에 관한 법률」 등 관련 법령을 준수합니다.
+PRIVACY = """온땅(이하 "회사")은 이용자의 개인정보를 중요하게 생각하며, 「개인정보 보호법」 및 「위치정보의 보호 및 이용 등에 관한 법률」 등 관련 법령을 준수합니다.
 
 1. 수집하는 개인정보 항목
 - 소셜 로그인(카카오): 카카오 회원번호, 닉네임, 프로필 이미지
@@ -89,51 +88,4 @@ const PRIVACY = `온땅(이하 "회사")은 이용자의 개인정보를 중요�
   연락처: rec8730@gmail.com
 
 9. 고지의 의무
-- 본 방침의 내용 추가·삭제·수정이 있을 경우 시행 최소 7일 전에 서비스 내 공지를 통해 알립니다.`;
-
-const SECTIONS = [
-  { title: "이용약관", body: TERMS },
-  { title: "개인정보처리방침", body: PRIVACY },
-];
-
-export default function Legal() {
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {SECTIONS.map((section) => (
-        <View key={section.title} style={styles.section}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-          <Text style={styles.body}>{section.body}</Text>
-        </View>
-      ))}
-      <Text style={styles.footer}>시행일: {EFFECTIVE_DATE}</Text>
-    </ScrollView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.xl,
-    gap: spacing.xl,
-  },
-  section: {
-    gap: spacing.md,
-  },
-  sectionTitle: {
-    ...typography.header,
-    color: colors.ink,
-  },
-  body: {
-    ...typography.body,
-    color: colors.ink,
-  },
-  footer: {
-    ...typography.meta,
-    color: colors.muted,
-    textAlign: "center",
-    marginTop: spacing.md,
-  },
-});
+- 본 방침의 내용 추가·삭제·수정이 있을 경우 시행 최소 7일 전에 서비스 내 공지를 통해 알립니다."""
