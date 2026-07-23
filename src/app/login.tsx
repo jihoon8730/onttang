@@ -26,7 +26,10 @@ export default function Login() {
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl },
+        {
+          paddingTop: insets.top + spacing.xl,
+          paddingBottom: insets.bottom + spacing.xl,
+        },
       ]}
     >
       <View style={styles.hero}>
@@ -37,7 +40,7 @@ export default function Login() {
           accessibilityLabel="온땅"
         />
         <Text style={styles.tagline}>
-          관광지를 탐험하고 도장을 찍어{"\n"}전국을 나만의 영토로
+          관광지를 탐험하고 스탬프를 찍어{"\n"}전국을 나만의 영토로
         </Text>
       </View>
 
@@ -49,7 +52,7 @@ export default function Login() {
             tintColor="#000000"
             style={styles.kakaoIcon}
           />
-          <Text style={styles.kakaoText}>카카오로 시작하기</Text>
+          <Text style={styles.kakaoText}>카카오로 로그인</Text>
         </Pressable>
 
         {/* 애플 로그인은 iOS 전용 (애플 심사 4.8 대응, 공식 버튼 필수) */}
@@ -122,8 +125,8 @@ const styles = StyleSheet.create({
   appleButton: { height: 52, width: "100%" },
   kakaoText: {
     color: "rgba(0, 0, 0, 0.85)",
-    fontWeight: "700",
-    fontSize: 16,
+    fontWeight: "600",
+    fontSize: 19,
   },
   guestButton: {
     borderWidth: 1.5,

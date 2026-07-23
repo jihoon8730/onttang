@@ -5,7 +5,7 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 
 const MONO = Platform.select({ ios: "Menlo", default: "monospace" });
 
-// 도장 찍은 날짜 → "07.19"
+// 스탬프 찍은 날짜 → "07.19"
 function stampDate(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -30,7 +30,7 @@ export default function StampSeal({ stamp, rotate }: Props) {
             <Text style={styles.flag}>⚑</Text>
           </View>
         )}
-        {/* 도장 테두리(점선 링) */}
+        {/* 스탬프 테두리(점선 링) */}
         <View style={styles.ring} pointerEvents="none" />
         {/* 하단 스크림 + 이름·날짜 */}
         <View style={styles.caption}>
@@ -44,13 +44,13 @@ export default function StampSeal({ stamp, rotate }: Props) {
   );
 }
 
-// 다음 탐험을 부르는 빈 도장 슬롯
+// 다음 탐험을 부르는 빈 스탬프 슬롯
 export function EmptySeal() {
   return (
     <View style={styles.cell}>
       <View style={[styles.seal, styles.emptySeal]}>
         <Text style={styles.emptyPlus}>+</Text>
-        <Text style={styles.emptyText}>다음 도장</Text>
+        <Text style={styles.emptyText}>다음 스탬프</Text>
       </View>
     </View>
   );

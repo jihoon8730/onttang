@@ -127,7 +127,7 @@ function ChampionCard({ entry }: { entry: RankingEntry }) {
         </Text>
         <Text style={styles.champCountRow}>
           <Text style={styles.champCount}>{comma(entry.stamp_count)}</Text> 곳
-          개척
+          탐험
         </Text>
       </View>
     </View>
@@ -205,7 +205,11 @@ export default function Ranking() {
             onPress={() => router.push("/login")}
             style={styles.loginCta}
           >
-            <SymbolView name={{ ios: "person.fill", android: "person" }} size={16} tintColor={colors.white} />
+            <SymbolView
+              name={{ ios: "person.fill", android: "person" }}
+              size={16}
+              tintColor={colors.white}
+            />
             <Text style={styles.loginCtaText}>로그인하고 순위 겨루기</Text>
           </Pressable>
         </View>

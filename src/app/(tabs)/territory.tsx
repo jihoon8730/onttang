@@ -19,10 +19,10 @@ import LottieView from "lottie-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// 도장이 손으로 찍힌 느낌 — 인장마다 살짝 다른 기울기
+// 스탬프가 손으로 찍힌 느낌 — 인장마다 살짝 다른 기울기
 const SEAL_ROTATIONS = [-6, 5, 4, -5, 3, -4];
 
-// "다음 도장" 빈 슬롯 = 그리드 마지막에 붙이는 sentinel (실제 content_id와 충돌 안 나게)
+// "다음 스탬프" 빈 슬롯 = 그리드 마지막에 붙이는 sentinel (실제 content_id와 충돌 안 나게)
 const NEXT_SLOT_ID = "__next_slot__";
 const NEXT_SLOT: MyStamp = {
   content_id: NEXT_SLOT_ID,

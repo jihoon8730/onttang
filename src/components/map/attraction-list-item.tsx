@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 type Props = {
   attraction: Attraction;
   selected: boolean;
-  visitCount?: number; // undefined = 미탐험, >=1 = 이미 도장 찍은 곳
+  visitCount?: number; // undefined = 미탐험, >=1 = 이미 스탬프 찍은 곳
   onPress: (attraction: Attraction) => void;
   onExplore: (attraction: Attraction) => void;
 };
@@ -33,7 +33,7 @@ function AttractionListItem({
           source={attraction.image_url}
           contentFit="cover"
         />
-        {/* 이미 탐험한(도장 찍은) 곳 표시 */}
+        {/* 이미 탐험한(스탬프 찍은) 곳 표시 */}
         {stamped ? (
           <View style={styles.seal}>
             <Text style={styles.sealFlag}>⚑</Text>
