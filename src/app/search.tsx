@@ -37,7 +37,8 @@ const REGIONS: { label: string; match: string }[] = [
   { label: "대구", match: "대구" },
   { label: "대전", match: "대전" },
   { label: "울산", match: "울산" },
-  { label: "광주", match: "광주" },
+  { label: "전남광주", match: "광주광역시" }, // 광주광역시(경기도 광주시와 동명이라 구분)
+  { label: "경기광주", match: "경기도 광주시" },
   { label: "전남", match: "전라남도" },
   { label: "경북", match: "경상북도" },
   { label: "경남", match: "경상남도" },

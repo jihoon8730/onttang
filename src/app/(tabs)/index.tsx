@@ -33,6 +33,7 @@ import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -386,7 +387,20 @@ export default function Index() {
         categories={categories}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
-        onEventBannerPress={() => router.push("/coupon-box")}
+        onEventBannerPress={() => {
+          if (!token) {
+            Alert.alert(
+              "로그인이 필요해요",
+              "스탬프 이벤트에 참여하려면 먼저 로그인해주세요",
+              [
+                { text: "취소", style: "cancel" },
+                { text: "로그인하기", onPress: () => router.push("/login") },
+              ],
+            );
+            return;
+          }
+          router.push("/coupon-box");
+        }}
       />
 
       {isLoading && (
