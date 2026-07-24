@@ -1,5 +1,6 @@
+import { DATA_SOURCE_URL } from "@/constants/config";
 import { colors, spacing, typography } from "@/constants/theme";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 // TODO(배포 전): 아래 [대괄호] 항목(운영자·연락처·시행일)을 실제 값으로 교체할 것
 const EFFECTIVE_DATE = "2026년 7월 22일";
@@ -99,6 +100,18 @@ const SECTIONS = [
 export default function Legal() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>데이터 출처 및 고지</Text>
+        <Text style={styles.body}>
+          온땅은 정부 기관이 아니며, 문화체육관광부·한국관광공사 등 어떠한 정부
+          기관과도 제휴 관계에 있지 않습니다.{"\n\n"}
+          온땅에서 제공하는 관광지 정보는 공공데이터포털에 등록된 한국관광공사
+          국문 관광정보 서비스(TourAPI)의 공공 데이터를 가공하여 제공합니다.
+        </Text>
+        <Pressable onPress={() => Linking.openURL(DATA_SOURCE_URL)}>
+          <Text style={styles.link}>원본 출처 보기 (data.go.kr) ↗</Text>
+        </Pressable>
+      </View>
       {SECTIONS.map((section) => (
         <View key={section.title} style={styles.section}>
           <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -129,6 +142,12 @@ const styles = StyleSheet.create({
   body: {
     ...typography.body,
     color: colors.ink,
+  },
+  link: {
+    ...typography.body,
+    color: colors.accent,
+    fontWeight: "700",
+    textDecorationLine: "underline",
   },
   footer: {
     ...typography.meta,

@@ -2,6 +2,7 @@ import BackButton from "@/components/detail/back-button";
 import ImageCarousel from "@/components/detail/image-carousel";
 import InfoRow from "@/components/detail/info-row";
 import StampButton from "@/components/detail/stamp-button";
+import { DATA_SOURCE_URL } from "@/constants/config";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { fetchAttractionDetail, fetchAttractions, fetchMyStamps } from "@/lib/api";
 import { extractHref } from "@/lib/utils";
@@ -180,7 +181,13 @@ export default function AttractionDetail() {
                   <Text style={styles.homepageButtonText}>홈페이지 방문</Text>
                 </Pressable>
               ) : null}
-              
+
+              <Pressable onPress={() => Linking.openURL(DATA_SOURCE_URL)}>
+                <Text style={styles.sourceText}>
+                  정보 제공: 공공데이터포털 한국관광공사 TourAPI ↗
+                </Text>
+              </Pressable>
+
               <View style={styles.bottomSpacer} />
             </>
           )}
@@ -295,6 +302,12 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: "700",
     color: colors.ink,
+  },
+  sourceText: {
+    ...typography.meta,
+    color: colors.muted,
+    textAlign: "center",
+    marginTop: spacing.lg,
   },
   bottomSpacer: {
     height: 40,

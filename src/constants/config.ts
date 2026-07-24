@@ -15,3 +15,7 @@ export const API_URL = __DEV__ ? `http://${DEV_HOST}:8000` : PROD_API_URL;
 // 카카오 로그인 브리지 — 카카오 콘솔에 등록하는 공개 https URL.
 // dev/prod 공용(항상 Railway). 카카오는 redirect_uri로 http(s)만 허용하므로 필요.
 export const KAKAO_BRIDGE_URL = `${PROD_API_URL}/kakao-bridge.html`;
+
+// 관광 정보 원본 출처 — 공공데이터포털에 등록된 한국관광공사 TourAPI 페이지.
+// 스토어 정책(혼동을 야기하는 주장) 대응: 정부 데이터 출처를 명확히 링크해야 함.
+export const DATA_SOURCE_URL = "https://www.data.go.kr/data/15101578/openapi.do";
