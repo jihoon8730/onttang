@@ -125,7 +125,7 @@ export default function More() {
         <QuickMenuItem
           icon={require("../../assets/images/clay_headset.png")}
           label="고객센터"
-          onPress={() => Alert.alert("고객센터", "준비 중입니다.")}
+          onPress={() => Alert.alert("고객센터", "준비 중 이에요 곧 만나요!")}
         />
       </View>
 

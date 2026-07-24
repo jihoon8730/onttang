@@ -41,7 +41,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   avatarFallback: { alignItems: "center", justifyContent: "center" },
-  avatarMine: { backgroundColor: colors.accentSoft },
+  // "내 순위" 카드 자체가 accentSoft 톤이라, 아바타는 흰 배경+accent 테두리로 대비를 줌
+  avatarMine: {
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+  },
   avatarInitial: { fontSize: 16, fontWeight: "800", color: colors.muted },
   avatarInitialMine: { color: colors.accent },
 });
