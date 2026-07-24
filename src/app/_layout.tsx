@@ -35,6 +35,22 @@ export default function RootLayout() {
               headerBackTitle: "더보기",
             }}
           />
+          <Stack.Screen
+            name="coupon-box"
+            options={{
+              headerShown: true,
+              title: "스탬프 이벤트",
+              headerBackTitle: "더보기",
+            }}
+          />
+          <Stack.Screen
+            name="my-coupons"
+            options={{
+              headerShown: true,
+              title: "내 쿠폰함",
+              headerBackTitle: "더보기",
+            }}
+          />
           <Stack.Screen name="login" options={{ presentation: "modal" }} />
         </Stack>
       </QueryClientProvider>

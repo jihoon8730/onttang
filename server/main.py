@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from models import Base
 from database import engine
-from routers import attractions, auth, stamps, me, markers, rankings
+from routers import attractions, auth, stamps, me, markers, rankings, coupons
 import legal_content
 
 Base.metadata.create_all(bind=engine)
@@ -146,3 +146,4 @@ app.include_router(stamps.router)
 app.include_router(me.router)
 app.include_router(markers.router)
 app.include_router(rankings.router)
+app.include_router(coupons.router)

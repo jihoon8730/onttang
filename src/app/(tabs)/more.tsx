@@ -1,11 +1,18 @@
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { deleteAccount } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
-import { useRouter } from "expo-router";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import LottieView from "lottie-react-native";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // TODO: 메뉴 화면 구현 시 되살리기
@@ -35,7 +42,10 @@ export default function More() {
               await deleteAccount(token);
               await logout(); // 서버 삭제 성공 후 로컬 세션(토큰·유저) 정리
             } catch {
-              Alert.alert("오류", "탈퇴에 실패했어요. 잠시 후 다시 시도해 주세요.");
+              Alert.alert(
+                "오류",
+                "탈퇴에 실패했어요. 잠시 후 다시 시도해 주세요.",
+              );
             }
           },
         },
@@ -60,7 +70,10 @@ export default function More() {
           로그인하고 내 정보와{"\n"}앱 설정을 관리해 보세요
         </Text>
 
-        <Pressable onPress={() => router.push("/login")} style={styles.kakaoButton}>
+        <Pressable
+          onPress={() => router.push("/login")}
+          style={styles.kakaoButton}
+        >
           <Text style={styles.kakaoText}>로그인하기</Text>
         </Pressable>
       </View>
@@ -95,6 +108,65 @@ export default function More() {
           </View>
         </View>
         <Text style={styles.name}>{user?.nickname ?? "나"}</Text>
+      </View>
+
+      <View style={styles.quickMenu}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.quickMenuItem,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={() => router.push("/coupon-box")}
+        >
+          <View
+            style={[styles.quickMenuIcon, { backgroundColor: "transparent" }]}
+          >
+            <Image
+              source={require("../../assets/images/clay_stamp.png")}
+              style={{ width: 48, height: 48, borderRadius: 12 }}
+              contentFit="cover"
+            />
+          </View>
+          <Text style={styles.quickMenuText}>스탬프 이벤트</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.quickMenuItem,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={() => router.push("/my-coupons")}
+        >
+          <View
+            style={[styles.quickMenuIcon, { backgroundColor: "transparent" }]}
+          >
+            <Image
+              source={require("../../assets/images/clay_my_coupon.png")}
+              style={{ width: 48, height: 48, borderRadius: 12 }}
+              contentFit="cover"
+            />
+          </View>
+          <Text style={styles.quickMenuText}>내 쿠폰함</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.quickMenuItem,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={() => Alert.alert("고객센터", "준비 중입니다.")}
+        >
+          <View
+            style={[styles.quickMenuIcon, { backgroundColor: "transparent" }]}
+          >
+            <Image
+              source={require("../../assets/images/clay_headset.png")}
+              style={{ width: 48, height: 48, borderRadius: 12 }}
+              contentFit="cover"
+            />
+          </View>
+          <Text style={styles.quickMenuText}>고객센터</Text>
+        </Pressable>
       </View>
 
       {/* TODO: 실제 화면 연결 시 되살리기 (알림/연결된 계정/공지/문의/약관)
@@ -168,7 +240,10 @@ export default function More() {
 
       <Pressable
         onPress={handleDeleteAccount}
-        style={({ pressed }) => [styles.deleteAccount, pressed && { opacity: 0.5 }]}
+        style={({ pressed }) => [
+          styles.deleteAccount,
+          pressed && { opacity: 0.5 },
+        ]}
       >
         <Text style={styles.deleteAccountText}>회원 탈퇴</Text>
       </Pressable>
@@ -230,6 +305,36 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: "700",
     fontSize: 16,
+  },
+  quickMenu: {
+    flexDirection: "row",
+    backgroundColor: colors.white,
+    borderRadius: radius.card,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+
+    justifyContent: "space-around",
+    alignItems: "flex-start",
+  },
+  quickMenuItem: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+    flex: 1,
+  },
+  quickMenuIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.accentSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  quickMenuText: {
+    ...typography.meta,
+    color: colors.ink,
+    fontWeight: "600",
   },
   group: {
     marginTop: spacing.xl,

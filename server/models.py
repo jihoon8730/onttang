@@ -60,3 +60,29 @@ class Stamp(Base):
 
     # 한 유저는 한 관광지에 스탬프는 1개 (재방문 visit_count는 증가)
     __table_args__ = (UniqueConstraint("user_id", "content_id"),)
+
+class Product(Base):
+    """쿠폰 이벤트에서 고를 수 있는 상품 카드(예: 스타벅스 아메리카노, CU 상품권).
+    모든 상품은 동일한 스탬프 마일스톤(COUPON_MILESTONE)을 공유하며,
+    유저는 조건 달성 후 이 중 하나만 골라 받을 수 있다.
+    관리자가 DB에 직접 행을 추가(별도 어드민 화면 없음)."""
+    __tablename__ = "products"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]  # 예: "스타벅스 아메리카노"
+    description: Mapped[str | None]
+    icon_ios: Mapped[str | None]  # SF Symbol 이름 (없으면 프론트 기본값)
+    icon_android: Mapped[str | None]  # Material Symbol 이름
+    is_active: Mapped[bool] = mapped_column(server_default="true")
+
+class CouponCode(Base):
+    """상품별 실제 기프티콘 코드 풀 — 선착순 자동 배정.
+    관리자가 수동으로 code를 채워 넣음(별도 발급 API 없음, DB 직접 insert)."""
+    __tablename__ = "coupon_codes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
+    code: Mapped[str]  # 기프티콘 코드/이미지 URL 등
+    # 유저 전체 통틀어 1개만 받을 수 있음(상품은 여러 개 중 하나만 선택)
+    claimed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), unique=True)
+    claimed_at: Mapped[datetime | None]
