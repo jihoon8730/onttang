@@ -4,7 +4,7 @@ from database import SessionLocal
 from models import Stamp, Attraction, User
 from constants import CATEGORY_LABELS, REGION_LABELS
 
-STAMP_RADIUS_M = 200  # 이 반경(m) 안에서만 스탬프 허용
+STAMP_RADIUS_M = 500  # 이 반경(m) 안에서만 스탬프 허용
 
 
 class TooFarError(Exception):

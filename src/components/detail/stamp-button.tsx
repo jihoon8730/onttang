@@ -21,10 +21,16 @@ type Props = {
   contentId: string;
   latitude: number;
   longitude: number;
+  visitCount?: number; // 이미 방문한 횟수 (있으면 버튼에 배지 표시)
 };
 
 // "여기 찍기" — 현재 위치를 담아 스탬프 요청 및 남은 거리 표시
-export default function StampButton({ contentId, latitude, longitude }: Props) {
+export default function StampButton({
+  contentId,
+  latitude,
+  longitude,
+  visitCount,
+}: Props) {
   const token = useAuthStore((s) => s.token);
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
@@ -205,15 +211,28 @@ export default function StampButton({ contentId, latitude, longitude }: Props) {
           <Text style={styles.distanceValue}>계산 중...</Text>
         )}
       </View>
-      <Pressable
-        onPress={stampHere}
-        disabled={loading}
-        style={[styles.button, loading && styles.buttonDisabled]}
-      >
-        <Text style={styles.text}>
-          {loading ? "탐험하는 중…" : "이곳 탐험하기"}
-        </Text>
-      </Pressable>
+      <View style={styles.buttonWrap}>
+        <Pressable
+          onPress={stampHere}
+          disabled={loading}
+          style={[styles.button, loading && styles.buttonDisabled]}
+        >
+          <Text style={styles.text}>
+            {loading ? "탐험하는 중…" : "이곳 탐험하기"}
+          </Text>
+        </Pressable>
+        {!!visitCount && (
+          <View style={styles.visitBadge}>
+            <SymbolView
+              name={{ ios: "checkmark", android: "check" }}
+              size={10}
+              weight="bold"
+              tintColor={colors.white}
+            />
+            <Text style={styles.visitBadgeText}>{visitCount}회 방문</Text>
+          </View>
+        )}
+      </View>
 
       <Modal
         visible={modal.visible}
@@ -324,6 +343,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.accent,
   },
+  buttonWrap: {
+    position: "relative",
+  },
   button: {
     backgroundColor: colors.accent,
     paddingVertical: 14,
@@ -332,6 +354,25 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  visitBadge: {
+    position: "absolute",
+    top: -10,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.accentDark,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  visitBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: colors.white,
   },
   text: {
     color: colors.white,

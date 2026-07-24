@@ -3,8 +3,9 @@ import ImageCarousel from "@/components/detail/image-carousel";
 import InfoRow from "@/components/detail/info-row";
 import StampButton from "@/components/detail/stamp-button";
 import { colors, radius, spacing, typography } from "@/constants/theme";
-import { fetchAttractionDetail, fetchAttractions } from "@/lib/api";
+import { fetchAttractionDetail, fetchAttractions, fetchMyStamps } from "@/lib/api";
 import { extractHref } from "@/lib/utils";
+import { useAuthStore } from "@/stores/use-auth-store";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
@@ -47,6 +48,15 @@ export default function AttractionDetail() {
     queryFn: () => fetchAttractionDetail(id),
     staleTime: 1000 * 60 * 30, // 상세 정보는 거의 안 바뀜 — 30분간 재요청 안 함
   });
+
+  // 이 장소를 이미 몇 번 방문했는지 (버튼 배지용)
+  const token = useAuthStore((s) => s.token);
+  const { data: myStamps } = useQuery({
+    queryKey: ["my-stamps"],
+    queryFn: () => fetchMyStamps(token!),
+    enabled: !!token,
+  });
+  const visitCount = myStamps?.find((s) => s.content_id === id)?.visit_count;
 
   const attraction = attractions.find((a) => a.content_id === id);
 
@@ -178,10 +188,11 @@ export default function AttractionDetail() {
       </ScrollView>
 
       <View style={[styles.bottomBar, { paddingBottom: spacing.lg + insets.bottom }]}>
-        <StampButton 
-          contentId={id} 
-          latitude={attraction.latitude} 
-          longitude={attraction.longitude} 
+        <StampButton
+          contentId={id}
+          latitude={attraction.latitude}
+          longitude={attraction.longitude}
+          visitCount={visitCount}
         />
       </View>
     </View>
