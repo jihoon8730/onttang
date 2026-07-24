@@ -29,7 +29,11 @@ export default function RootLayout() {
           <Stack.Screen name="search" />
           <Stack.Screen
             name="legal"
-            options={{ headerShown: true, title: "약관 및 정책" }}
+            options={{
+              headerShown: true,
+              title: "약관 및 정책",
+              headerBackTitle: "더보기",
+            }}
           />
           <Stack.Screen name="login" options={{ presentation: "modal" }} />
         </Stack>
