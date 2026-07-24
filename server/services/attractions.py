@@ -12,6 +12,19 @@ AREA_CODES = [
     "41", "51", "43", "44", "52", "47", "48", "50",
 ]
 
+# 통합코드 12의 addr1이 실제 행정구역명 대신 TourAPI 내부 표기인
+# "전남광주통합특별시"로 내려와서, 저장 시 실제 시도명으로 바로잡는다
+GWANGJU_DISTRICTS = {"동구", "서구", "남구", "북구", "광산구"}
+
+
+def _normalize_address(addr: str) -> str:
+    prefix = "전남광주통합특별시"
+    if not addr.startswith(prefix):
+        return addr
+    district = addr[len(prefix):].strip().split(" ", 1)[0]
+    real_sido = "광주광역시" if district in GWANGJU_DISTRICTS else "전라남도"
+    return real_sido + addr[len(prefix):]
+
 
 def list_featured() -> list[Attraction]:
     """대표(is_featured) 관광지 전체 조회."""
@@ -43,7 +56,7 @@ async def sync_attractions(ldong_regn_cd: str = "11") -> int:
                             Attraction(
                                 content_id=item["contentid"],
                                 title=item["title"],
-                                address=item.get("addr1", ""),
+                                address=_normalize_address(item.get("addr1", "")),
                                 latitude=lat,
                                 longitude=lng,
                                 area_code=code,

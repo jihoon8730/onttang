@@ -22,7 +22,26 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const RECENT_KEY = "recentSearches";
-const REGIONS = ["서울", "부산", "제주", "경주", "강원", "전주", "여수", "경기"];
+// label = 칩에 보이는 짧은 이름, match = 주소 문자열에서 실제로 찾을 부분 문자열.
+// "전라남도"·"경상북도"·"경상남도"는 축약형이 주소에 연속으로 안 나와서 정식 명칭으로 매칭
+const REGIONS: { label: string; match: string }[] = [
+  { label: "서울", match: "서울" },
+  { label: "부산", match: "부산" },
+  { label: "제주", match: "제주" },
+  { label: "경주", match: "경주" },
+  { label: "강원", match: "강원" },
+  { label: "전주", match: "전주" },
+  { label: "여수", match: "여수" },
+  { label: "경기", match: "경기" },
+  { label: "인천", match: "인천" },
+  { label: "대구", match: "대구" },
+  { label: "대전", match: "대전" },
+  { label: "울산", match: "울산" },
+  { label: "광주", match: "광주" },
+  { label: "전남", match: "전라남도" },
+  { label: "경북", match: "경상북도" },
+  { label: "경남", match: "경상남도" },
+];
 const THEMES = ["자연", "역사", "체험·즐길거리", "명소"];
 
 export default function Search() {
@@ -32,6 +51,7 @@ export default function Search() {
 
   const [query, setQuery] = useState("");
   const [theme, setTheme] = useState<string | null>(null);
+  const [region, setRegion] = useState<string | null>(null);
   const [recent, setRecent] = useState<string[]>([]);
 
   const { data: attractions = [] } = useQuery({
@@ -78,7 +98,8 @@ export default function Search() {
   };
 
   const q = query.trim().toLowerCase();
-  const filtering = q !== "" || theme !== null;
+  const regionMatch = REGIONS.find((r) => r.label === region)?.match ?? region;
+  const filtering = q !== "" || theme !== null || region !== null;
   const results = !filtering
     ? []
     : attractions.filter((a) => {
@@ -87,7 +108,9 @@ export default function Search() {
           a.title.toLowerCase().includes(q) ||
           (a.address?.toLowerCase().includes(q) ?? false);
         const themeOk = theme === null || a.category === theme;
-        return textOk && themeOk;
+        const regionOk =
+          regionMatch === null || (a.address ?? "").includes(regionMatch);
+        return textOk && themeOk && regionOk;
       });
 
   const selectPlace = (a: Attraction) => {
@@ -138,17 +161,29 @@ export default function Search() {
         </Pressable>
       </View>
 
-      {/* 활성 테마 필터 */}
-      {theme ? (
-        <View style={styles.activeRow}>
-          <Pressable style={styles.activeChip} onPress={() => setTheme(null)}>
-            <Text style={styles.activeChipText}>테마 · {theme}</Text>
-            <SymbolView
-              name={{ ios: "xmark", android: "close" }}
-              size={11}
-              tintColor={colors.accent}
-            />
-          </Pressable>
+      {/* 활성 지역/테마 필터 */}
+      {region || theme ? (
+        <View style={[styles.activeRow, styles.activeRowMulti]}>
+          {region ? (
+            <Pressable style={styles.activeChip} onPress={() => setRegion(null)}>
+              <Text style={styles.activeChipText}>지역 · {region}</Text>
+              <SymbolView
+                name={{ ios: "xmark", android: "close" }}
+                size={11}
+                tintColor={colors.accent}
+              />
+            </Pressable>
+          ) : null}
+          {theme ? (
+            <Pressable style={styles.activeChip} onPress={() => setTheme(null)}>
+              <Text style={styles.activeChipText}>테마 · {theme}</Text>
+              <SymbolView
+                name={{ ios: "xmark", android: "close" }}
+                size={11}
+                tintColor={colors.accent}
+              />
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
 
@@ -184,15 +219,22 @@ export default function Search() {
           <View style={styles.block}>
             <Text style={styles.label}>지역</Text>
             <View style={styles.chips}>
-              {REGIONS.map((r) => (
-                <Pressable
-                  key={r}
-                  style={styles.chip}
-                  onPress={() => setQuery(r)}
-                >
-                  <Text style={styles.chipText}>{r}</Text>
-                </Pressable>
-              ))}
+              {REGIONS.map((r) => {
+                const active = region === r.label;
+                return (
+                  <Pressable
+                    key={r.label}
+                    style={[styles.chip, active && styles.chipActive]}
+                    onPress={() => setRegion(active ? null : r.label)}
+                  >
+                    <Text
+                      style={[styles.chipText, active && styles.chipTextActive]}
+                    >
+                      {r.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
@@ -343,6 +385,7 @@ const styles = StyleSheet.create({
   cancel: { fontSize: 15, fontWeight: "600", color: colors.accent },
 
   activeRow: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  activeRowMulti: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   activeChip: {
     flexDirection: "row",
     alignItems: "center",
@@ -398,6 +441,8 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
   },
   chipText: { fontSize: 13, fontWeight: "700", color: colors.ink },
+  chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipTextActive: { color: colors.white },
   themeChip: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,

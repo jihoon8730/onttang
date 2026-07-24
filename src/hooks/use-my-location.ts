@@ -1,7 +1,7 @@
 import { NaverMapViewRef } from "@mj-studio/react-native-naver-map";
 import * as Location from "expo-location";
 import { RefObject, useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 
 type Coords = { latitude: number; longitude: number };
 
@@ -19,22 +19,17 @@ export function useMyLocation(mapRef: RefObject<NaverMapViewRef | null>) {
   const lastHeadingAt = useRef(0);
   const lastHeadingValue = useRef(0);
 
-  // 화면 떠날 때 위치·방향 구독 정리 (배터리 절약)
-  useEffect(() => {
-    return () => {
-      locationSub.current?.remove();
-      headingSub.current?.remove();
-    };
-  }, []);
-
-  // 권한 요청 → 현재 위치로 카메라 이동 → 이후 이동을 실시간 추적
-  const showMyLocation = async () => {
+  // 권한 요청(명시적 탭) 또는 이미 허용된 경우만 조용히 확인(자동 재개) → 위치 추적 시작.
+  // moveCamera=true일 때만 카메라를 이동 — 조용히 재개할 땐 지도 시점은 그대로 둠.
+  const locate = async (moveCamera: boolean) => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = moveCamera
+        ? await Location.requestForegroundPermissionsAsync()
+        : await Location.getForegroundPermissionsAsync();
       if (status !== "granted") return;
 
-      // Android: 위치 서비스가 꺼져 있으면 시스템에 켜달라고 요청
-      if (Platform.OS === "android") {
+      // Android: 위치 서비스가 꺼져 있으면 시스템에 켜달라고 요청 (명시적 액션에서만)
+      if (moveCamera && Platform.OS === "android") {
         await Location.enableNetworkProviderAsync();
       }
 
@@ -44,7 +39,13 @@ export function useMyLocation(mapRef: RefObject<NaverMapViewRef | null>) {
         longitude: loc.coords.longitude,
       };
       setMyLocation(coords);
-      mapRef.current?.animateCameraTo({ ...coords, zoom: 15 });
+      if (moveCamera) {
+        mapRef.current?.animateCameraTo({ ...coords, zoom: 15 });
+      }
+
+      // 재개 시 기존 구독이 남아있으면 중복 등록되지 않도록 먼저 정리
+      locationSub.current?.remove();
+      headingSub.current?.remove();
 
       // 연속 추적은 Balanced로 (High는 지하철·버스 등 고속 이동 시 GPS를 과도하게
       // 자주 재측위해 연산 부담↑ → 끊김의 한 원인). distanceInterval도 1m→8m로 완화하고
@@ -84,6 +85,28 @@ export function useMyLocation(mapRef: RefObject<NaverMapViewRef | null>) {
       console.warn("내 위치를 가져오지 못했어요", e);
     }
   };
+
+  // 버튼 탭 — 권한 없으면 요청 팝업을 띄우고, 카메라도 내 위치로 이동
+  const showMyLocation = () => locate(true);
+
+  // 오래 백그라운드에 있다가 돌아오면(특히 iOS가 메모리 회수로 앱을 재기동한 경우)
+  // 위치 추적 구독이 끊긴 채라 "내 위치" 점이 사라져 보임 — 포그라운드 복귀 시
+  // 이미 권한이 있으면(팝업 없이) 조용히 재개. 카메라는 옮기지 않음.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") locate(false);
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 화면 떠날 때 위치·방향 구독 정리 (배터리 절약)
+  useEffect(() => {
+    return () => {
+      locationSub.current?.remove();
+      headingSub.current?.remove();
+    };
+  }, []);
 
   return { myLocation, heading, showMyLocation };
 }
