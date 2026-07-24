@@ -57,9 +57,8 @@ const INITIAL_CAMERA = {
 const FOCUS_ZOOM = 15;
 const FOCUS_DURATION = 1000;
 
-// 바텀시트 스크롤 영역
-const SHEET_SNAP_POINTS = ["35%", "80%"];
-const SHEET_SNAP_RATIOS = [0.35, 0.8]; // SNAP_POINTS와 1:1 대응 (mapPadding 계산용)
+// 바텀시트 스크롤 영역 — 확장 시 상단 시스템바(노치 등) 바로 아래까지 올려 이벤트 버튼도 자연스럽게 덮이도록
+const SHEET_COLLAPSED_RATIO = 0.35;
 const SHEET_INITIAL_INDEX = 0; // 접힘으로 시작
 const SHEET_ANIM_DURATION = 500;
 const LIST_BOTTOM_PADDING = 90;
@@ -94,6 +93,17 @@ export default function Index() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [region, setRegion] = useState<Region | null>(null);
   const [sheetIndex, setSheetIndex] = useState(SHEET_INITIAL_INDEX);
+
+  // 바텀시트 확장 스냅포인트 — 상단 시스템바(노치·상태바) 아래까지만 올라가도록 화면 높이에서 insets.top만큼 뺀 픽셀값 사용
+  const sheetExpandedHeight = screenH - insets.top;
+  const sheetSnapPoints = useMemo(
+    () => [`${SHEET_COLLAPSED_RATIO * 100}%`, sheetExpandedHeight],
+    [sheetExpandedHeight],
+  );
+  const sheetSnapRatios = useMemo(
+    () => [SHEET_COLLAPSED_RATIO, sheetExpandedHeight / screenH],
+    [sheetExpandedHeight, screenH],
+  );
 
   // --- 내 위치 (커스텀 훅) ---
   const { myLocation, heading, showMyLocation } = useMyLocation(mapRef);
@@ -146,32 +156,37 @@ export default function Index() {
     );
   }, [region, filteredAttractions]);
 
-  // 마커 객체 생성 (사진 있으면 백엔드 합성 원형 마커, 없으면 브랜드 핀 폴백)
-  const buildMarker = useCallback((a: Attraction, selected: boolean) => {
-    if (a.image_url) {
-      const url = `${API_URL}/markers?src=${encodeURIComponent(a.image_url)}${
-        selected ? "&selected=true" : ""
-      }`;
+  // 마커 객체 생성 (사진 있으면 백엔드 합성 원형 마커, 없으면 브랜드 핀 폴백) — 이미 탐험한 곳은 체크 배지 표시
+  const buildMarker = useCallback(
+    (a: Attraction, selected: boolean) => {
+      const stamped = stampMap.has(a.content_id);
+      if (a.image_url) {
+        const params = new URLSearchParams({ src: a.image_url });
+        if (selected) params.set("selected", "true");
+        if (stamped) params.set("stamped", "true");
+        const url = `${API_URL}/markers?${params.toString()}`;
+        return {
+          identifier: a.content_id,
+          latitude: a.latitude,
+          longitude: a.longitude,
+          image: { httpUri: url },
+          width: selected ? 54 : 44,
+          height: selected ? 65 : 53,
+        };
+      }
       return {
         identifier: a.content_id,
         latitude: a.latitude,
         longitude: a.longitude,
-        image: { httpUri: url },
-        width: selected ? 54 : 44,
-        height: selected ? 65 : 53,
+        image: selected
+          ? require("../../../assets/images/marker-selected.png")
+          : require("../../../assets/images/marker.png"),
+        width: selected ? 34 : 28,
+        height: selected ? 42 : 35,
       };
-    }
-    return {
-      identifier: a.content_id,
-      latitude: a.latitude,
-      longitude: a.longitude,
-      image: selected
-        ? require("../../../assets/images/marker-selected.png")
-        : require("../../../assets/images/marker.png"),
-      width: selected ? 34 : 28,
-      height: selected ? 42 : 35,
-    };
-  }, []);
+    },
+    [stampMap],
+  );
 
   // 전국 대표를 클러스터 마커로 (네이버 SDK가 줌에 따라 자동 클러스터링).
   // selectedId 변경 시 배열 전체가 아닌 "선택된 1개"만 새 객체로 교체해
@@ -218,11 +233,11 @@ export default function Index() {
   // 바텀시트가 덮는 만큼 지도 중심을 위로 올려, 보이는 영역 기준으로 카메라가 맞도록
   const mapPadding = useMemo(() => {
     const ratio = Math.min(
-      SHEET_SNAP_RATIOS[sheetIndex],
+      sheetSnapRatios[sheetIndex],
       MAP_PADDING_MAX_RATIO,
     );
     return { bottom: screenH * ratio };
-  }, [screenH, sheetIndex]);
+  }, [screenH, sheetIndex, sheetSnapRatios]);
 
   // --- 콜백 ---
   const focusAttraction = useCallback((a: Attraction) => {
@@ -323,12 +338,13 @@ export default function Index() {
       <BottomSheet
         ref={sheetRef}
         index={SHEET_INITIAL_INDEX}
-        snapPoints={SHEET_SNAP_POINTS}
+        snapPoints={sheetSnapPoints}
         onChange={setSheetIndex}
         animationConfigs={animationConfigs}
         enableDynamicSizing={false}
         enableContentPanningGesture={false}
         keyboardBehavior="interactive"
+        containerStyle={styles.sheetContainer}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.sheetHandle}
       >
@@ -370,6 +386,7 @@ export default function Index() {
         categories={categories}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
+        onEventBannerPress={() => router.push("/coupon-box")}
       />
 
       {isLoading && (
@@ -391,6 +408,9 @@ const styles = StyleSheet.create({
   mapSection: { flex: 1 },
   map: { flex: 1 },
   list: { flex: 1, backgroundColor: colors.background },
+  sheetContainer: {
+    zIndex: 20, // 상단 오버레이(이벤트 버튼 등, zIndex 10)보다 위로 — 100% 확장 시 자연스럽게 덮이도록
+  },
   sheetBackground: {
     backgroundColor: colors.background,
     borderTopLeftRadius: radius.sheet,

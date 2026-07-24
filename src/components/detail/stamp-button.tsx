@@ -6,16 +6,9 @@ import { useAuthStore } from "@/stores/use-auth-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { SymbolView } from "expo-symbols";
-import LottieView from "lottie-react-native";
 import { useEffect, useState } from "react";
-import {
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import StampResultModal from "./stamp-result-modal";
 
 type Props = {
   contentId: string;
@@ -234,83 +227,15 @@ export default function StampButton({
         )}
       </View>
 
-      <Modal
+      <StampResultModal
         visible={modal.visible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModal((p) => ({ ...p, visible: false }))}
-      >
-        <View style={styles.modalOverlay}>
-          {modal.type === "celebration" ? (
-            <View style={styles.celebrationContent}>
-              <LottieView
-                source={require("../../assets/lottie/confetti.json")}
-                autoPlay
-                loop
-                resizeMode="cover"
-              />
-              <View style={styles.celebInner}>
-                <View style={styles.celebIconBadge}>
-                  <SymbolView
-                    name={{ ios: "flag.fill", android: "flag" }}
-                    size={48}
-                    tintColor={colors.accent}
-                  />
-                </View>
-                <Text style={styles.celebTitle}>{modal.title}</Text>
-                <Text style={styles.celebMessage}>{modal.message}</Text>
-
-                <View style={styles.statBox}>
-                  <View style={styles.statRow}>
-                    <Text style={styles.statLabel}>이번 장소 방문</Text>
-                    <Text style={styles.statValue}>{modal.visitCount}회</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statRow}>
-                    <Text style={styles.statLabel}>나의 전국 개척</Text>
-                    <Text style={styles.statValue}>
-                      {stats?.stamped ?? 0}곳
-                    </Text>
-                  </View>
-                </View>
-
-                <Pressable
-                  style={styles.celebButton}
-                  onPress={() => setModal((p) => ({ ...p, visible: false }))}
-                >
-                  <Text style={styles.celebButtonText}>계속 탐험하기</Text>
-                </Pressable>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.modalContent}>
-              <SymbolView
-                name={
-                  modal.type === "success"
-                    ? { ios: "checkmark.circle.fill", android: "check_circle" }
-                    : {
-                        ios: "exclamationmark.triangle.fill",
-                        android: "warning",
-                      }
-                }
-                size={56}
-                tintColor={
-                  modal.type === "success" ? colors.accent : colors.muted
-                }
-                style={{ marginBottom: spacing.md }}
-              />
-              <Text style={styles.modalTitle}>{modal.title}</Text>
-              <Text style={styles.modalMessage}>{modal.message}</Text>
-              <Pressable
-                style={styles.modalButton}
-                onPress={() => setModal((p) => ({ ...p, visible: false }))}
-              >
-                <Text style={styles.modalButtonText}>확인</Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
-      </Modal>
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        visitCount={modal.visitCount}
+        stampedTotal={stats?.stamped ?? 0}
+        onClose={() => setModal((p) => ({ ...p, visible: false }))}
+      />
     </View>
   );
 }
@@ -378,141 +303,5 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: "700",
     fontSize: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xl,
-  },
-  modalContent: {
-    backgroundColor: colors.white,
-    borderRadius: 24,
-    padding: spacing.xl,
-    alignItems: "center",
-    width: "100%",
-    maxWidth: 320,
-    elevation: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-  },
-  modalTitle: {
-    ...typography.header,
-    color: colors.ink,
-    marginBottom: spacing.xs,
-    textAlign: "center",
-  },
-  modalMessage: {
-    ...typography.body,
-    color: colors.muted,
-    textAlign: "center",
-    marginBottom: spacing.xl,
-  },
-  modalButton: {
-    backgroundColor: colors.chip,
-    width: "100%",
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  modalButtonText: {
-    ...typography.body,
-    fontWeight: "700",
-    color: colors.ink,
-  },
-
-  // Celebration UI
-  celebrationContent: {
-    backgroundColor: colors.white,
-    borderRadius: 28,
-    width: "100%",
-    maxWidth: 340,
-    overflow: "hidden",
-    elevation: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
-    shadowRadius: 30,
-  },
-  celebInner: {
-    padding: spacing.xl * 1.5,
-    alignItems: "center",
-  },
-  celebIconBadge: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: colors.accentSoft,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.xl,
-    borderWidth: 4,
-    borderColor: colors.white,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  celebTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: colors.ink,
-    letterSpacing: -0.6,
-    marginBottom: spacing.sm,
-  },
-  celebMessage: {
-    ...typography.body,
-    color: colors.muted,
-    textAlign: "center",
-    marginBottom: spacing.xl,
-  },
-  statBox: {
-    backgroundColor: colors.chip,
-    width: "100%",
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    borderRadius: 16,
-    marginBottom: spacing.xl,
-  },
-  statRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: spacing.sm,
-  },
-  statDivider: {
-    height: 1,
-    backgroundColor: "rgba(0,0,0,0.06)",
-    marginVertical: 4,
-  },
-  statLabel: {
-    ...typography.meta,
-    color: colors.muted,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: colors.accent,
-  },
-  celebButton: {
-    backgroundColor: colors.accent,
-    width: "100%",
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    shadowColor: colors.accentDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  celebButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.white,
   },
 });

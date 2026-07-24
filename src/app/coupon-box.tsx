@@ -1,16 +1,15 @@
+import ProductCardItem from "@/components/coupon/product-card-item";
+import AlertModal from "@/components/ui/AlertModal";
 import ProgressBar from "@/components/ui/ProgressBar";
-import TicketPerforation from "@/components/ui/TicketPerforation";
 import { colors, fontMono, radius, spacing, typography } from "@/constants/theme";
 import { claimProduct, fetchCouponCatalog } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
-import { ProductCard as ProductCardType } from "@/types/coupon";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { type ComponentProps, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,78 +17,12 @@ import {
   View,
 } from "react-native";
 
-// 상품이 아이콘을 지정 안 했을 때 기본값
-const DEFAULT_ICON = { ios: "gift.fill", android: "card_giftcard" };
-
-function ProductCardItem({
-  product,
-  eligible,
-  disabled,
-  claiming,
-  onClaim,
-}: {
-  product: ProductCardType;
-  eligible: boolean;
-  disabled: boolean; // 이미 다른 상품을 받아 더는 고를 수 없는 상태
-  claiming: boolean;
-  onClaim: (productId: number) => void;
-}) {
-  const icon =
-    product.icon_ios && product.icon_android
-      ? { ios: product.icon_ios, android: product.icon_android }
-      : DEFAULT_ICON;
-  const soldOut = product.remaining <= 0;
-
-  return (
-    <View style={[styles.card, disabled && styles.cardDisabled]}>
-      <View style={styles.cardHead}>
-        <View style={styles.cardIconBadge}>
-          {/* icon은 DB에서 오는 자유 텍스트(관리자가 등록) — 컴파일타임에 검증 불가해 캐스팅 */}
-          <SymbolView
-            name={icon as ComponentProps<typeof SymbolView>["name"]}
-            size={26}
-            tintColor={colors.accent}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>{product.name}</Text>
-          {product.description ? (
-            <Text style={styles.cardDesc}>{product.description}</Text>
-          ) : null}
-        </View>
-        <Text style={styles.stockTag}>
-          {product.remaining}/{product.total}
-        </Text>
-      </View>
-
-      <TicketPerforation />
-
-      {disabled ? (
-        <Text style={styles.hintText}>이미 다른 상품을 받으셨어요</Text>
-      ) : soldOut ? (
-        <Text style={styles.hintText}>품절됐어요</Text>
-      ) : eligible ? (
-        <Pressable
-          style={[styles.claimButton, claiming && { opacity: 0.6 }]}
-          onPress={() => onClaim(product.product_id)}
-          disabled={claiming}
-        >
-          <Text style={styles.claimButtonText}>
-            {claiming ? "받는 중…" : "상품 받기"}
-          </Text>
-        </Pressable>
-      ) : (
-        <Text style={styles.hintText}>스탬프를 다 모으면 받을 수 있어요</Text>
-      )}
-    </View>
-  );
-}
-
 export default function CouponBox() {
   const token = useAuthStore((s) => s.token);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [claimingId, setClaimingId] = useState<number | null>(null);
+  const [alert, setAlert] = useState<{ title: string; message: string } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["coupon-catalog"],
@@ -104,10 +37,10 @@ export default function CouponBox() {
       await claimProduct(token, productId);
       queryClient.invalidateQueries({ queryKey: ["coupon-catalog"] });
     } catch (e) {
-      Alert.alert(
-        "상품을 받지 못했어요",
-        e instanceof Error ? e.message : "잠시 후 다시 시도해주세요",
-      );
+      setAlert({
+        title: "상품을 받지 못했어요",
+        message: e instanceof Error ? e.message : "잠시 후 다시 시도해주세요",
+      });
     } finally {
       setClaimingId(null);
     }
@@ -192,12 +125,25 @@ export default function CouponBox() {
                   disabled={data.claimed}
                   claiming={claimingId === p.product_id}
                   onClaim={handleClaim}
+                  onInsufficient={() =>
+                    setAlert({
+                      title: "스탬프가 부족해요",
+                      message: `관광지 ${data.milestone}곳을 탐험하면 상품을 받을 수 있어요\n(현재 ${data.stamped}/${data.milestone}곳)`,
+                    })
+                  }
                 />
               ))}
             </View>
           </>
         ) : null}
       </ScrollView>
+
+      <AlertModal
+        visible={!!alert}
+        title={alert?.title ?? ""}
+        message={alert?.message ?? ""}
+        onClose={() => setAlert(null)}
+      />
     </View>
   );
 }

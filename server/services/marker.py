@@ -3,17 +3,18 @@ import io
 import httpx
 from PIL import Image, ImageDraw
 
-# 합성된 마커를 재사용 (src+selected 별로 1회만 생성)
-_cache: dict[tuple[str, bool], bytes] = {}
+# 합성된 마커를 재사용 (src+selected+stamped 별로 1회만 생성)
+_cache: dict[tuple[str, bool, bool], bytes] = {}
 
 # 같은 마커가 여러 요청에서 동시에 캐시미스 나도 한 번만 생성하도록(thundering herd 방지)
-_locks: dict[tuple[str, bool], asyncio.Lock] = {}
+_locks: dict[tuple[str, bool, bool], asyncio.Lock] = {}
 
 # 연결 재사용(매 요청마다 TLS 핸드셰이크 하지 않도록) — 프로세스 생존 기간 동안 유지
 _client = httpx.AsyncClient(timeout=15.0)
 
 ACCENT = (47, 122, 85, 255)  # #2F7A55
 ACCENT_DARK = (31, 91, 61, 255)  # #1F5B3D (선택)
+WHITE = (255, 255, 255, 255)
 
 
 def _cover_circle(photo: Image.Image, size: int) -> Image.Image:
@@ -25,7 +26,39 @@ def _cover_circle(photo: Image.Image, size: int) -> Image.Image:
     return photo.resize((size, size), Image.LANCZOS)
 
 
-def _compose(photo: Image.Image, selected: bool) -> bytes:
+def _draw_stamped_badge(canvas: Image.Image, d: int, SS: int) -> None:
+    """이미 탐험한 장소 배지 — 바텀시트 목록의 '탐험함' 깃발 씰과 동일한 톤(흰 배경 + accent 테두리 + 깃발).
+    가장자리에 안 닿도록 여유 있게 안쪽에 배치."""
+    bd = 26 * SS  # 배지 지름
+    margin = 14 * SS  # 캔버스 가장자리에서 확실히 떨어뜨려 잘리는 느낌 방지
+    bx = d - bd - margin
+    by = d - bd - margin
+    draw = ImageDraw.Draw(canvas)
+    border = int(2 * SS)
+    draw.ellipse(
+        [bx, by, bx + bd, by + bd], fill=WHITE, outline=ACCENT_DARK, width=border
+    )
+
+    # 깃발 아이콘 (막대 + 삼각 깃발) — 리스트의 ⚑ 씰과 같은 모티프
+    cx, cy = bx + bd / 2, by + bd / 2
+    pole_h = bd * 0.5
+    pole_x = cx - bd * 0.12
+    top = cy - pole_h / 2
+    bottom = cy + pole_h / 2
+    draw.line([(pole_x, top), (pole_x, bottom)], fill=ACCENT_DARK, width=int(1.6 * SS))
+    flag_w = bd * 0.34
+    flag_h = bd * 0.24
+    draw.polygon(
+        [
+            (pole_x, top),
+            (pole_x + flag_w, top + flag_h * 0.5),
+            (pole_x, top + flag_h),
+        ],
+        fill=ACCENT_DARK,
+    )
+
+
+def _compose(photo: Image.Image, selected: bool, stamped: bool) -> bytes:
     SS = 3  # 슈퍼샘플링
     d = 96 * SS          # 원 지름
     ring = 7 * SS        # 링 두께
@@ -51,21 +84,24 @@ def _compose(photo: Image.Image, selected: bool) -> bytes:
     ImageDraw.Draw(mask).ellipse([0, 0, inner - 1, inner - 1], fill=255)
     canvas.paste(circ, (ring, ring), mask)
 
+    if stamped:
+        _draw_stamped_badge(canvas, d, SS)
+
     out = canvas.resize((w // SS, h // SS), Image.LANCZOS)
     buf = io.BytesIO()
     out.save(buf, "PNG")
     return buf.getvalue()
 
 
-def _decode_and_compose(raw: bytes, selected: bool) -> bytes:
+def _decode_and_compose(raw: bytes, selected: bool, stamped: bool) -> bytes:
     """CPU 연산(디코딩+크롭+합성) — 스레드에서 돌려 이벤트 루프를 막지 않는다."""
     photo = Image.open(io.BytesIO(raw)).convert("RGB")
-    return _compose(photo, selected)
+    return _compose(photo, selected, stamped)
 
 
-async def build_marker(src: str, selected: bool) -> bytes:
+async def build_marker(src: str, selected: bool, stamped: bool = False) -> bytes:
     """원격 사진 → 원형 마커 PNG (캐시)."""
-    key = (src, selected)
+    key = (src, selected, stamped)
     if key in _cache:
         return _cache[key]
 
@@ -79,6 +115,6 @@ async def build_marker(src: str, selected: bool) -> bytes:
         res.raise_for_status()
 
         # Pillow는 CPU 바운드 동기 작업 — to_thread로 넘겨 다른 요청 처리를 막지 않음
-        png = await asyncio.to_thread(_decode_and_compose, res.content, selected)
+        png = await asyncio.to_thread(_decode_and_compose, res.content, selected, stamped)
         _cache[key] = png
         return png
