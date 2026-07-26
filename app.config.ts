@@ -5,6 +5,12 @@ const config: ExpoConfig = {
   name: "온땅",
   slug: "onttang",
   version: "1.0.1",
+  runtimeVersion: {
+    policy: "appVersion",
+  },
+  updates: {
+    url: "https://u.expo.dev/8b09d028-9e71-4bbf-8e55-aa5e07ff7855",
+  },
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "onttang",
