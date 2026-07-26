@@ -65,9 +65,9 @@ export default function Ranking() {
         ListEmptyComponent={
           champ ? null : (
             <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>아직 첫 줄이 비어있어요</Text>
+              <Text style={styles.emptyTitle}>전국 1위 자리가 비어있어요</Text>
               <Text style={styles.emptyBody}>
-                관광지를 개척해 도장을 찍으면{"\n"}이 페이지의 첫 줄이 채워져요
+                지금 도장을 찍으면{"\n"}가장 먼저 이름을 올리는 탐험가가 돼요
               </Text>
             </View>
           )

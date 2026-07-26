@@ -135,7 +135,9 @@ export default function Territory() {
         }
         numColumns={4}
         ListEmptyComponent={
-          <Text style={styles.empty}>아직 탐험한 곳이 없어요</Text>
+          <Text style={styles.empty}>
+            지도에서 첫 관광지를 탐험하고{"\n"}나만의 영토를 시작해보세요
+          </Text>
         }
         renderItem={({ item, index }) =>
           item.content_id === NEXT_SLOT_ID ? (
