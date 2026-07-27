@@ -72,7 +72,7 @@ onttang/
 │  ├─ lib/                      # api 클라이언트·유틸
 │  ├─ stores/                   # zustand (인증·검색·카테고리 필터)
 │  └─ types/                    # 타입 정의
-├─ server/                      # FastAPI 백엔드 (별도 실행) → server/README.md
+├─ server/                      # FastAPI 백엔드 (별도 실행)
 │  └─ routers/                  # attractions · auth · coupons · rankings · stamps · me
 ├─ app.config.ts                # Expo 설정
 ├─ eas.json                     # EAS Build/Update 프로필
