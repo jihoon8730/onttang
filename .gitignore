@@ -28,6 +28,9 @@ yarn-error.*
 
 # macOS
 .DS_Store
+
+# 원본 데모 영상(용량 큼, README엔 GIF만 커밋)
+docs/video/*.mov
 *.pem
 
 # local env files
