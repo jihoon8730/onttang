@@ -18,15 +18,26 @@ export function useBackgroundStamps() {
   const token = useAuthStore((s) => s.token);
   const enabled = useSettingsStore((s) => s.backgroundStampsEnabled);
   const lastRefreshAt = useRef(0);
+  // 직전에 등록한 감시 대상 관광지 id 목록 — 같은 목록이면 재등록을 건너뛴다.
+  // (재등록할 때마다 iOS가 현재 반경 안 지역들의 "진입" 이벤트를 즉시 다시 쏘기 때문)
+  const lastRegisteredIds = useRef("");
 
   useEffect(() => {
     if (!token || !enabled) {
       lastRefreshAt.current = 0; // 다음에 다시 켤 때 최소 간격 제한 없이 즉시 재등록되도록
-      Location.hasStartedGeofencingAsync(GEOFENCE_TASK_NAME).then(
-        (started) => {
-          if (started) Location.stopGeofencingAsync(GEOFENCE_TASK_NAME);
-        },
-      );
+      lastRegisteredIds.current = "";
+      // hasStartedGeofencingAsync가 이전 세션 기록(UserDefaults)으로 true를 반환해도
+      // 이번 실행의 네이티브 태스크 테이블엔 없어서 stop이 "Task not found"를 던질 수
+      // 있다 — 이미 꺼져있다는 뜻이므로 무시.
+      (async () => {
+        try {
+          const started =
+            await Location.hasStartedGeofencingAsync(GEOFENCE_TASK_NAME);
+          if (started) await Location.stopGeofencingAsync(GEOFENCE_TASK_NAME);
+        } catch {
+          // no-op: 이미 중지된 상태
+        }
+      })();
       return;
     }
 
@@ -57,6 +68,14 @@ export function useBackgroundStamps() {
         );
         if (nearby.length === 0) return;
 
+        // 감시 대상이 직전 등록과 동일하면 재등록하지 않는다 — 재등록은 iOS가
+        // 현재 반경 안 지역들의 Enter 이벤트를 몽땅 다시 발화시키는 부작용이 있다.
+        const ids = nearby.map((a) => a.content_id).join(",");
+        if (ids === lastRegisteredIds.current) {
+          lastRefreshAt.current = now;
+          return;
+        }
+
         await Location.startGeofencingAsync(
           GEOFENCE_TASK_NAME,
           nearby.map((a) => ({
@@ -69,6 +88,7 @@ export function useBackgroundStamps() {
           })),
         );
         lastRefreshAt.current = now;
+        lastRegisteredIds.current = ids;
       } catch (e) {
         console.warn("[geofence] 감시 목록 갱신 실패", e);
       }
