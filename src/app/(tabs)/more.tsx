@@ -3,6 +3,7 @@ import { colors, radius, spacing, typography } from "@/constants/theme";
 import { deleteAccount } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { useSettingsStore } from "@/stores/use-settings-store";
+import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
@@ -307,7 +308,9 @@ export default function More() {
         <Text style={styles.deleteAccountText}>회원 탈퇴</Text>
       </Pressable>
 
-      <Text style={styles.version}>ONTTANG v1.1.0</Text>
+      <Text style={styles.version}>
+        ONTTANG v{Constants.expoConfig?.version ?? ""}
+      </Text>
     </ScrollView>
   );
 }
