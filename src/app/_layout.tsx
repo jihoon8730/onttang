@@ -8,9 +8,21 @@ import { useBackgroundStamps } from "@/hooks/use-background-stamps";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { useSettingsStore } from "@/stores/use-settings-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import * as Notifications from "expo-notifications";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+// 자동 스탬프 알림이 앱을 켜둔 동안(포그라운드)에도 배너로 뜨도록.
+// (기본값은 포그라운드에서 알림을 숨김 — 이 핸들러가 없으면 조용히 넘어감)
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {

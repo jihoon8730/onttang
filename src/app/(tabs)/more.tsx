@@ -307,7 +307,7 @@ export default function More() {
         <Text style={styles.deleteAccountText}>회원 탈퇴</Text>
       </Pressable>
 
-      <Text style={styles.version}>ONTTANG v1.0.0</Text>
+      <Text style={styles.version}>ONTTANG v1.1.0</Text>
     </ScrollView>
   );
 }
