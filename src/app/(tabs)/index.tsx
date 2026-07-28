@@ -1,4 +1,5 @@
 import AttractionListItem from "@/components/map/attraction-list-item";
+import AutoStampBanner from "@/components/map/auto-stamp-banner";
 import MapSearchOverlay from "@/components/map/map-search-overlay";
 import MyLocationButton from "@/components/map/my-location-button";
 import { API_URL } from "@/constants/config";
@@ -17,6 +18,7 @@ import {
 } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { useFilterStore } from "@/stores/use-filter-store";
+import { useSettingsStore } from "@/stores/use-settings-store";
 import { Attraction } from "@/types/attraction";
 import BottomSheet, {
   useBottomSheetScrollableCreator,
@@ -121,6 +123,20 @@ export default function Index() {
 
   // 내 스탬프 (로그인 시) — 지도 리스트에 "탐험함" 표시용
   const token = useAuthStore((s) => s.token);
+
+  // 자동 스탬프 홍보 배너 — 로그인했지만 아직 안 켰고, 닫지도 않은 사용자에게만
+  const backgroundStampsEnabled = useSettingsStore(
+    (s) => s.backgroundStampsEnabled,
+  );
+  const autoStampBannerDismissed = useSettingsStore(
+    (s) => s.autoStampBannerDismissed,
+  );
+  const dismissAutoStampBanner = useSettingsStore(
+    (s) => s.dismissAutoStampBanner,
+  );
+  const showAutoStampBanner =
+    !!token && !backgroundStampsEnabled && !autoStampBannerDismissed;
+
   const { data: myStamps } = useQuery({
     queryKey: ["my-stamps"],
     queryFn: () => fetchMyStamps(token!),
@@ -356,23 +372,31 @@ export default function Index() {
           keyExtractor={(item) => item.content_id}
           estimatedItemSize={110}
           ListHeaderComponent={
-            <View style={styles.sheetHead}>
-              <View style={styles.sheetHeaderLeft}>
-                <View style={styles.sheetIconWrapper}>
-                  <SymbolView
-                    name={{ ios: "map.fill", android: "map" }}
-                    size={16}
-                    tintColor={colors.accent}
-                    type="hierarchical"
-                  />
+            <>
+              {showAutoStampBanner && (
+                <AutoStampBanner
+                  onPress={() => router.push("/more")}
+                  onDismiss={dismissAutoStampBanner}
+                />
+              )}
+              <View style={styles.sheetHead}>
+                <View style={styles.sheetHeaderLeft}>
+                  <View style={styles.sheetIconWrapper}>
+                    <SymbolView
+                      name={{ ios: "map.fill", android: "map" }}
+                      size={16}
+                      tintColor={colors.accent}
+                      type="hierarchical"
+                    />
+                  </View>
+                  <Text style={styles.sheetEyebrow}>주변 탐험지</Text>
                 </View>
-                <Text style={styles.sheetEyebrow}>주변 탐험지</Text>
+                <View style={styles.sheetCountRow}>
+                  <Text style={styles.sheetCount}>{listData.length}</Text>
+                  <Text style={styles.sheetOf}>곳</Text>
+                </View>
               </View>
-              <View style={styles.sheetCountRow}>
-                <Text style={styles.sheetCount}>{listData.length}</Text>
-                <Text style={styles.sheetOf}>곳</Text>
-              </View>
-            </View>
+            </>
           }
           renderItem={renderItem}
           contentContainerStyle={{

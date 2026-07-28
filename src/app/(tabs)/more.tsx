@@ -243,7 +243,7 @@ export default function More() {
               ]}
             >
               <Image
-                source={require("../../assets/images/clay_location.jpg")}
+                source={require("../../assets/images/clay_location.png")}
                 style={{ width: 48, height: 48, borderRadius: 24 }}
                 contentFit="cover"
               />
