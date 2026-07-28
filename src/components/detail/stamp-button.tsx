@@ -138,7 +138,15 @@ export default function StampButton({
         queryClient.invalidateQueries({ queryKey: ["my-stamps"] });
         queryClient.invalidateQueries({ queryKey: ["my-stats"] });
         queryClient.invalidateQueries({ queryKey: ["rankings"] });
-        if (data.visit_count === 1) {
+        if (!data.counted) {
+          // 재방문 쿨다운 중 — 이미 방문 처리된 곳이라 이번 탭은 카운트되지 않음
+          showModal(
+            "이미 다녀가셨어요",
+            "최근에 방문이 확인된 곳이에요. 시간이 좀 지나면 다시 방문 기록을 남길 수 있어요",
+            "success",
+            data.visit_count,
+          );
+        } else if (data.visit_count === 1) {
           showModal(
             "탐험 성공!",
             "새로운 영토를 발견했습니다",

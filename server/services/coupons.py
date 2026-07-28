@@ -5,7 +5,7 @@ from database import SessionLocal
 from models import CouponCode, Product, Stamp
 
 # 쿠폰 이벤트 조건 — 모든 상품이 이 마일스톤을 공유(스탬프 N곳 이상이면 카탈로그에서 1개 선택 가능)
-COUPON_MILESTONE = 10
+COUPON_MILESTONE = 5
 
 
 class NotEligibleError(Exception):

@@ -54,7 +54,6 @@ def _db_get_detail(content_id: str) -> dict | None:
         if row is None:
             return None
         if datetime.now() - row.cached_at > timedelta(days=DETAIL_TTL_DAYS):
-            print(f"🟡 [DB 캐시 만료] {content_id} — cached_at={row.cached_at} (TTL {DETAIL_TTL_DAYS}일 초과) → 재조회")
             return None  # TTL 만료 — 캐시 미스로 취급해 TourAPI 재조회
         return {
             "overview": row.overview,
@@ -75,7 +74,6 @@ def _db_save_detail(content_id: str, result: dict) -> None:
         now = datetime.now()
         session.merge(AttractionDetail(content_id=content_id, cached_at=now, **result))
         session.commit()
-        print(f"💾 [DB 캐시 저장] {content_id} — cached_at={now}")
 
 
 async def fetch_attraction_detail(content_id: str) -> dict:
@@ -84,20 +82,16 @@ async def fetch_attraction_detail(content_id: str) -> dict:
     if cached is not None:
         result, cached_at = cached
         if datetime.now() - cached_at <= timedelta(days=DETAIL_TTL_DAYS):
-            print(f"🟢 [메모리 캐시 히트] {content_id} — cached_at={cached_at}")
             return result
-        print(f"🟡 [메모리 캐시 만료] {content_id} — cached_at={cached_at} (TTL {DETAIL_TTL_DAYS}일 초과)")
         _DETAIL_CACHE.pop(content_id, None)  # 메모리 캐시도 만료 — 아래에서 재조회
 
     # 2. DB 영구 캐시 확인 — 서버 재배포로 메모리 캐시가 비워져도 여기서 즉시 반환
     db_result = await asyncio.to_thread(_db_get_detail, content_id)
     if db_result is not None:
-        print(f"🔵 [DB 캐시 히트] {content_id} — 메모리 캐시에도 채워넣음")
         _DETAIL_CACHE[content_id] = (db_result, datetime.now())
         return db_result
 
     # 3. 캐시 완전 미스 — TourAPI 실시간 조회 (여기만 느림, 최초 1회뿐)
-    print(f"🔴 [캐시 완전 미스] {content_id} — TourAPI 실시간 조회 시작")
     base = {
         "serviceKey": settings.tour_api_key,
         "MobileOS": "ETC",
