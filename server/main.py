@@ -1,14 +1,36 @@
+from contextlib import asynccontextmanager
 from html import escape
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from models import Base
 from database import engine
 from routers import attractions, auth, stamps, me, markers, rankings, coupons
+from services.attractions import sync_attractions
 import legal_content
 
 Base.metadata.create_all(bind=engine)
-app = FastAPI()
+
+# 한국관광공사 OpenAPI는 국문 관광정보를 매일 04:30에 갱신 — 30분 버퍼를 두고 05:00에 전체 동기화.
+scheduler = AsyncIOScheduler(timezone="Asia/Seoul")
+
+
+async def _daily_sync_job():
+    total = await sync_attractions(ldong_regn_cd=None)  # None → AREA_CODES 전체 순회
+    print(f"✅ 일일 관광지 동기화 완료 — {total}건")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.add_job(_daily_sync_job, CronTrigger(hour=5, minute=0))
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def read_root():

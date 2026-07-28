@@ -19,6 +19,7 @@ class Attraction(Base):
     lcls_systm2: Mapped[str | None]
     lcls_systm3: Mapped[str | None]
     is_featured: Mapped[bool] = mapped_column(server_default="false")
+    synced_at : Mapped[datetime | None]
 
 class AttractionDetail(Base):
     """TourAPI 상세(개요·이용안내·이미지) 영구 캐시.
