@@ -20,7 +20,9 @@ const config: ExpoConfig = {
     // expo-secure-store(키체인) 접근 권한 — prebuild가 이 값을 entitlements 파일에 반영.
     // 표준형($(AppIdentifierPrefix) 접두사)이라 실기기에서 유효.
     entitlements: {
-      "keychain-access-groups": ["$(AppIdentifierPrefix)com.jihoon8730.onttang"],
+      "keychain-access-groups": [
+        "$(AppIdentifierPrefix)com.jihoon8730.onttang",
+      ],
     },
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -53,6 +55,10 @@ const config: ExpoConfig = {
       "expo-location",
       {
         locationWhenInUsePermission: "현재 위치를 지도에 표시하는 데 사용해요",
+        locationAlwaysAndWhenInUsePermission:
+          "관광지 근처에 도착하면 앱을 열지 않아도 자동으로 스탬프를 찍어드려요",
+        isIosBackgroundLocationEnabled: true,
+        isAndroidBackgroundLocationEnabled: true,
       },
     ],
     [

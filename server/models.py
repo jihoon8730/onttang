@@ -58,6 +58,7 @@ class Stamp(Base):
     content_id: Mapped[str] = mapped_column(ForeignKey("attractions.content_id")) # 장소
     visit_count: Mapped[int] = mapped_column(default=1) # 방문 횟수
     stamped_at: Mapped[datetime] = mapped_column(server_default=func.now()) # 처음 찍은 시각
+    last_visited_at: Mapped[datetime | None] # 가장 최근 방문 인정 시각 (재방문 쿨다운 판정용)
 
     # 한 유저는 한 관광지에 스탬프는 1개 (재방문 visit_count는 증가)
     __table_args__ = (UniqueConstraint("user_id", "content_id"),)

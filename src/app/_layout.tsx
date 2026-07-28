@@ -1,4 +1,12 @@
+// 반드시 다른 어떤 import보다도 먼저 평가돼야 한다 — TaskManager.defineTask는
+// 앱이 시작될 때 즉시 실행돼야 네이티브 쪽이 이 태스크 이름을 인식한다.
+// (use-background-stamps를 통한 간접 import에만 의존하면 등록 타이밍이
+// 어긋나 "Task not found for app ID" 에러가 날 수 있음)
+import "@/tasks/geofence-stamp-task";
+
+import { useBackgroundStamps } from "@/hooks/use-background-stamps";
 import { useAuthStore } from "@/stores/use-auth-store";
+import { useSettingsStore } from "@/stores/use-settings-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
@@ -15,10 +23,14 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
+  const hydrateSettings = useSettingsStore((s) => s.hydrate);
 
   useEffect(() => {
     hydrate(); // 앱 시작 시 저장된 로그인 상태 복원
-  }, [hydrate]);
+    hydrateSettings(); // 백그라운드 자동 스탬프 on/off 저장값 복원
+  }, [hydrate, hydrateSettings]);
+
+  useBackgroundStamps(); // 로그인 + 설정 on 상태면 백그라운드 자동 스탬프 geofence 관리
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

@@ -2,15 +2,20 @@ import QuickMenuItem from "@/components/more/quick-menu-item";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { deleteAccount } from "@/lib/api";
 import { useAuthStore } from "@/stores/use-auth-store";
+import { useSettingsStore } from "@/stores/use-settings-store";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
+import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import LottieView from "lottie-react-native";
 import {
   Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from "react-native";
@@ -26,7 +31,50 @@ export default function More() {
   const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
 
+  const backgroundStampsEnabled = useSettingsStore(
+    (s) => s.backgroundStampsEnabled,
+  );
+  const setBackgroundStampsEnabled = useSettingsStore(
+    (s) => s.setBackgroundStampsEnabled,
+  );
+
   const insets = useSafeAreaInsets();
+
+  // 토글 ON: "항상 허용" 위치 권한 + 알림 권한까지 받아야만 실제로 켠다.
+  // 거부되면 설정값은 그대로 꺼진 채로 두고, 왜 안 켜졌는지 안내한다.
+  const handleToggleBackgroundStamps = async (value: boolean) => {
+    if (!value) {
+      await setBackgroundStampsEnabled(false);
+      return;
+    }
+
+    const { status: fgStatus } =
+      await Location.requestForegroundPermissionsAsync();
+    if (fgStatus !== "granted") {
+      Alert.alert(
+        "위치 권한이 필요해요",
+        "자동 스탬프를 쓰려면 위치 권한이 필요해요",
+      );
+      return;
+    }
+
+    const { status: bgStatus } =
+      await Location.requestBackgroundPermissionsAsync();
+    if (bgStatus !== "granted") {
+      Alert.alert(
+        "'항상 허용'이 필요해요",
+        "앱을 열지 않아도 자동으로 스탬프를 찍으려면, 설정 앱에서 온땅의 위치 권한을 '항상 허용'으로 바꿔주세요.",
+        [
+          { text: "취소", style: "cancel" },
+          { text: "설정으로 이동", onPress: () => Linking.openSettings() },
+        ],
+      );
+      return;
+    }
+
+    await Notifications.requestPermissionsAsync();
+    await setBackgroundStampsEnabled(true);
+  };
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -178,6 +226,57 @@ export default function More() {
       */}
 
       <View style={styles.group}>
+        <Text style={styles.groupLabel}>설정</Text>
+        <Pressable
+          style={[
+            styles.autoStampCard,
+            backgroundStampsEnabled && styles.autoStampCardActive,
+          ]}
+          onPress={() => handleToggleBackgroundStamps(!backgroundStampsEnabled)}
+        >
+          <View style={styles.autoStampTop}>
+            <View
+              style={[
+                styles.autoStampIconWrap,
+                backgroundStampsEnabled && styles.autoStampIconWrapActive,
+                { backgroundColor: "transparent" }
+              ]}
+            >
+              <Image
+                source={require("../../assets/images/clay_location.jpg")}
+                style={{ width: 48, height: 48, borderRadius: 24 }}
+                contentFit="cover"
+              />
+            </View>
+            <View style={styles.autoStampTextBox}>
+              <Text style={styles.autoStampTitle}>자동 스탬프 찍기</Text>
+              <Text style={styles.autoStampDesc}>
+                근처에 가면 알아서 스탬프를 쾅!{"\n"}앱을 안 켜도 자동으로 찍어드려요
+              </Text>
+            </View>
+            <Switch
+              value={backgroundStampsEnabled}
+              onValueChange={handleToggleBackgroundStamps}
+              trackColor={{ true: colors.accent }}
+              style={{ transform: [{ scale: 0.9 }] }}
+            />
+          </View>
+          {backgroundStampsEnabled && (
+            <View style={styles.autoStampBadge}>
+              <SymbolView
+                name={{ ios: "location.viewfinder", android: "my_location" }}
+                size={14}
+                tintColor={colors.accent}
+              />
+              <Text style={styles.autoStampBadgeText}>
+                현재 위치 주변을 실시간으로 탐색 중이에요
+              </Text>
+            </View>
+          )}
+        </Pressable>
+      </View>
+
+      <View style={styles.group}>
         <Text style={styles.groupLabel}>정보</Text>
         <View style={styles.groupBody}>
           <Pressable
@@ -314,6 +413,65 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: colors.ink,
     letterSpacing: -0.3,
+  },
+  autoStampCard: {
+    backgroundColor: colors.white,
+    borderRadius: radius.card,
+    borderWidth: 1.5,
+    borderColor: colors.hairline,
+    padding: spacing.lg,
+  },
+  autoStampCardActive: {
+    borderColor: colors.accent,
+    backgroundColor: `${colors.accent}08`, // Slight tint for premium feel
+  },
+  autoStampTop: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  autoStampIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.chip,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+  },
+  autoStampIconWrapActive: {
+    backgroundColor: colors.accent,
+  },
+  autoStampTextBox: {
+    flex: 1,
+    marginRight: spacing.sm,
+    gap: 4,
+  },
+  autoStampTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.ink,
+    letterSpacing: -0.3,
+  },
+  autoStampDesc: {
+    fontSize: 13,
+    color: colors.muted,
+    fontWeight: "500",
+    lineHeight: 18,
+    letterSpacing: -0.2,
+  },
+  autoStampBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: `${colors.accent}30`,
+  },
+  autoStampBadgeText: {
+    ...typography.meta,
+    color: colors.accent,
+    fontWeight: "600",
   },
   logoutButton: {
     marginTop: spacing.xl,

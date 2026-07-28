@@ -1,10 +1,12 @@
-from math import radians, sin, cos, asin, sqrt
+from datetime import datetime, timedelta
 from sqlalchemy import select, func
 from database import SessionLocal
 from models import Stamp, Attraction, User
 from constants import CATEGORY_LABELS, REGION_LABELS
+from services.geo import distance_m as _distance_m
 
 STAMP_RADIUS_M = 500  # 이 반경(m) 안에서만 스탬프 허용
+REVISIT_COOLDOWN_HOURS = 6  # 이 시간 안의 재진입은 같은 방문으로 취급 — 카운트 안 늘림
 
 
 class TooFarError(Exception):
@@ -12,15 +14,6 @@ class TooFarError(Exception):
 
     def __init__(self, distance_m: int):
         self.distance_m = distance_m
-
-
-def _distance_m(lat1, lng1, lat2, lng2) -> float:
-    """두 GPS 좌표 사이 실제 거리(미터). 하버사인 공식."""
-    R = 6371000  # 지구 반지름(m)
-    dlat = radians(lat2 - lat1)
-    dlng = radians(lng2 - lng1)
-    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlng / 2) ** 2
-    return 2 * R * asin(sqrt(a))
 
 
 def list_stamps(user_id: int) -> list[dict]:
@@ -111,7 +104,13 @@ def get_stats(user_id: int) -> dict:
 
 
 def create_stamp(user_id: int, content_id: str, lat: float, lng: float) -> dict:
-    """현재 위치가 관광지 반경 안이면 스탬프 생성(또는 재방문 +1)."""
+    """현재 위치가 관광지 반경 안이면 스탬프 생성(또는 재방문 +1).
+
+    재방문은 마지막 방문(last_visited_at)으로부터 REVISIT_COOLDOWN_HOURS가
+    지나야만 카운트된다 — 백그라운드 자동 스탬프가 같은 자리에서 geofence를
+    반복 재등록하거나(진입 이벤트 재발화), 수동 버튼을 연타해도 방문 횟수가
+    무한정 올라가지 않도록 막는 안전장치.
+    """
     with SessionLocal() as session:
         attraction = session.get(Attraction, content_id)
         dist = _distance_m(lat, lng, attraction.latitude, attraction.longitude)
@@ -124,18 +123,28 @@ def create_stamp(user_id: int, content_id: str, lat: float, lng: float) -> dict:
             Stamp.content_id == content_id,
         )
         stamp = session.execute(stmt).scalar_one_or_none()
+        now = datetime.now()
+        counted = True
 
         if stamp is None:
-            stamp = Stamp(user_id=user_id, content_id=content_id)
+            stamp = Stamp(user_id=user_id, content_id=content_id, last_visited_at=now)
             session.add(stamp)
+        elif (
+            stamp.last_visited_at is not None
+            and now - stamp.last_visited_at < timedelta(hours=REVISIT_COOLDOWN_HOURS)
+        ):
+            counted = False  # 쿨다운 안 지남 — 이미 찍힌 방문으로 취급, 그대로 반환
         else:
             stamp.visit_count += 1
+            stamp.last_visited_at = now
 
         session.commit()
         return {
             "id": stamp.id,
             "content_id": stamp.content_id,
+            "title": attraction.title,
             "visit_count": stamp.visit_count,
+            "counted": counted,  # False면 쿨다운 중 재요청 — 프론트/백그라운드 태스크가 알림 등을 생략할 때 씀
         }
 
 

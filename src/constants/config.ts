@@ -16,6 +16,10 @@ export const API_URL = __DEV__ ? `http://${DEV_HOST}:8000` : PROD_API_URL;
 // dev/prod 공용(항상 Railway). 카카오는 redirect_uri로 http(s)만 허용하므로 필요.
 export const KAKAO_BRIDGE_URL = `${PROD_API_URL}/kakao-bridge.html`;
 
+// 스탬프 인증 반경(m) — 백엔드 services/stamps.py의 STAMP_RADIUS_M과 반드시 같은 값 유지.
+// (geofence 반경을 이거보다 넓게 잡으면 "진입 알림"은 왔는데 서버가 반경 밖이라 거절하는 경우가 생김)
+export const STAMP_RADIUS_M = 500;
+
 // 관광 정보 원본 출처 — 공공데이터포털에 등록된 한국관광공사 TourAPI 페이지.
 // 스토어 정책(혼동을 야기하는 주장) 대응: 정부 데이터 출처를 명확히 링크해야 함.
 export const DATA_SOURCE_URL = "https://www.data.go.kr/data/15101578/openapi.do";

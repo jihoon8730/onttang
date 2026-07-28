@@ -4,6 +4,7 @@ from sqlalchemy import select, delete
 from database import SessionLocal
 from models import Attraction, AttractionDetail, Stamp
 from services.tour_api import fetch_attractions
+from services.geo import distance_m
 from datetime import datetime
 
 NUM_OF_ROWS = 100
@@ -35,6 +36,33 @@ def list_featured() -> list[Attraction]:
     with SessionLocal() as session:
         stmt = select(Attraction).where(Attraction.is_featured.is_(True))
         return session.execute(stmt).scalars().all()
+
+
+def list_nearby(lat: float, lng: float, radius_m: float, limit: int) -> list[dict]:
+    """대표 관광지 중 현재 위치 기준 radius_m 이내를 가까운 순으로 최대 limit개 반환.
+    (백그라운드 geofence 등록 대상 선정용 — iOS는 동시 20개 제한이라 limit으로 좁힌다)"""
+    with SessionLocal() as session:
+        stmt = select(Attraction).where(Attraction.is_featured.is_(True))
+        candidates = session.execute(stmt).scalars().all()
+
+    nearby = [
+        {"attraction": a, "distance_m": distance_m(lat, lng, a.latitude, a.longitude)}
+        for a in candidates
+        if a.latitude is not None and a.longitude is not None
+    ]
+    nearby = [row for row in nearby if row["distance_m"] <= radius_m]
+    nearby.sort(key=lambda row: row["distance_m"])
+
+    return [
+        {
+            "content_id": row["attraction"].content_id,
+            "title": row["attraction"].title,
+            "latitude": row["attraction"].latitude,
+            "longitude": row["attraction"].longitude,
+            "distance_m": round(row["distance_m"]),
+        }
+        for row in nearby[:limit]
+    ]
 
 
 async def _sync_region(session, code: str) -> int:

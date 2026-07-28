@@ -10,6 +10,14 @@ class AttractionOut(BaseModel):
     image_url: str | None
     model_config = {"from_attributes": True}
 
+class NearbyAttractionOut(BaseModel):
+    content_id: str
+    title: str
+    latitude: float
+    longitude: float
+    distance_m: int
+    model_config = {"from_attributes": True}
+
 class AttractionDetailOut(BaseModel):
     content_id: str
     overview: str | None

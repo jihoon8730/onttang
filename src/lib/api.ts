@@ -1,6 +1,7 @@
 import { API_URL } from "@/constants/config";
 import { Attraction, AttractionDetail } from "@/types/attraction";
 import { CouponCatalog } from "@/types/coupon";
+import { NearbyAttraction } from "@/types/nearby";
 import { Rankings } from "@/types/ranking";
 import { MyStamp, MyStats } from "@/types/stamp";
 
@@ -15,6 +16,17 @@ export async function fetchAttractionDetail(
 ): Promise<AttractionDetail> {
   const res = await fetch(`${API_URL}/attractions/${id}`);
   if (!res.ok) throw new Error("상세 조회 실패");
+  return res.json();
+}
+
+export async function fetchNearbyAttractions(
+  lat: number,
+  lng: number,
+): Promise<NearbyAttraction[]> {
+  const res = await fetch(
+    `${API_URL}/attractions/nearby?lat=${lat}&lng=${lng}`,
+  );
+  if (!res.ok) throw new Error("주변 관광지 조회 실패");
   return res.json();
 }
 
