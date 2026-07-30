@@ -5,12 +5,14 @@
 import "@/tasks/geofence-stamp-task";
 
 import { useBackgroundStamps } from "@/hooks/use-background-stamps";
+import { queryClient } from "@/lib/query-client";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { useSettingsStore } from "@/stores/use-settings-store";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, QueryClientProvider } from "@tanstack/react-query";
 import * as Notifications from "expo-notifications";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
+import { AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 // 자동 스탬프 알림이 앱을 켜둔 동안(포그라운드)에도 배너로 뜨도록.
@@ -24,13 +26,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1, // 기본 3회 대신 1회만 재시도
-      retryDelay: 300, // 기본(첫 재시도 전 약 1000ms) 대신 300ms로 단축
-    },
-  },
+AppState.addEventListener("change", (state) => {
+  focusManager.setFocused(state === "active");
 });
 
 export default function RootLayout() {

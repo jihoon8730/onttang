@@ -1,4 +1,5 @@
 import { API_URL } from "@/constants/config";
+import { queryClient } from "@/lib/query-client";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
@@ -54,6 +55,10 @@ TaskManager.defineTask(GEOFENCE_TASK_NAME, async ({ data, error }) => {
     // counted=false는 재방문 쿨다운 중(서버가 이미 카운트한 최근 방문) — 같은 자리에
     // 머무는 동안 geofence가 재등록될 때마다 알림이 반복 발송되는 것을 막는다.
     if (!stamp.counted) return;
+
+    queryClient.invalidateQueries({ queryKey: ["my-stamps"] });
+    queryClient.invalidateQueries({ queryKey: ["my-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["rankings"] });
 
     await Notifications.scheduleNotificationAsync({
       content: {
