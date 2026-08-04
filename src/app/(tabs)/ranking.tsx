@@ -1,5 +1,4 @@
 import ChampionSeal from "@/components/ranking/champion-seal";
-import { ledger } from "@/components/ranking/ledger-theme";
 import MeRow from "@/components/ranking/me-row";
 import RankRow from "@/components/ranking/rank-row";
 import {

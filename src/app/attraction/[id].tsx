@@ -61,6 +61,15 @@ export default function AttractionDetail() {
 
   const attraction = attractions.find((a) => a.content_id === id);
 
+  const images = useMemo(() => {
+    if (!attraction) return [];
+
+    return [attraction.image_url, ...(detail?.images ?? [])].filter(
+      (url, index, arr): url is string =>
+        url !== null && arr.indexOf(url) === index,
+    );
+  }, [attraction, detail?.images]);
+
   if (!attraction) {
     return (
       <View style={styles.center}>
@@ -69,13 +78,6 @@ export default function AttractionDetail() {
       </View>
     );
   }
-
-  const images = useMemo(() => {
-    return [attraction.image_url, ...(detail?.images ?? [])].filter(
-      (url, index, arr): url is string =>
-        url !== null && arr.indexOf(url) === index,
-    );
-  }, [attraction.image_url, detail?.images]);
 
   const homepageUrl = detail?.homepage ? extractHref(detail.homepage) : null;
 

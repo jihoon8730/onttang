@@ -6,7 +6,6 @@ import { API_URL } from "@/constants/config";
 import {
   colors,
   fontMono,
-  radius,
   spacing,
   typography,
 } from "@/constants/theme";
@@ -311,8 +310,13 @@ export default function Index() {
   useEffect(() => {
     if (!pendingFocusId || attractions.length === 0) return;
     const target = attractions.find((a) => a.content_id === pendingFocusId);
-    if (target) focusAttraction(target);
-    setPendingFocusId(null);
+
+    const frame = requestAnimationFrame(() => {
+      if (target) focusAttraction(target);
+      setPendingFocusId(null);
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, [pendingFocusId, attractions, focusAttraction, setPendingFocusId]);
 
   return (

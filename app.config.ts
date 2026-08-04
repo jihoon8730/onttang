@@ -4,7 +4,7 @@ import { ExpoConfig } from "expo/config";
 const config: ExpoConfig = {
   name: "온땅",
   slug: "onttang",
-  version: "1.1.0",
+  version: "1.1.1",
   runtimeVersion: {
     policy: "appVersion",
   },

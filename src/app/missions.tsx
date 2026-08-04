@@ -14,7 +14,7 @@ import * as Location from "expo-location";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -65,7 +65,7 @@ export default function MissionsScreen() {
     return m;
   }, [myStamps]);
 
-  const refreshLocation = async () => {
+  const refreshLocation = useCallback(async () => {
     setLocating(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -91,11 +91,15 @@ export default function MissionsScreen() {
     } finally {
       setLocating(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    refreshLocation();
-  }, []);
+    const frame = requestAnimationFrame(() => {
+      void refreshLocation();
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [refreshLocation]);
 
   const missions = useMemo<Mission[]>(() => {
     if (!location) return [];
