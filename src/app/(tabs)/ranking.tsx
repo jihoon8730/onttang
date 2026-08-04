@@ -10,12 +10,22 @@ import {
   typography,
 } from "@/constants/theme";
 import { fetchRankings } from "@/lib/api";
+import { comma } from "@/lib/format";
 import { useAuthStore } from "@/stores/use-auth-store";
+import { RankingEntry } from "@/types/ranking";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useMemo } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Ranking() {
@@ -23,54 +33,112 @@ export default function Ranking() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const { data } = useQuery({
+  const { data, error, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ["rankings", token],
     queryFn: () => fetchRankings(token),
   });
 
-  const rankings = data?.rankings ?? [];
+  const rankings = useMemo(() => data?.rankings ?? [], [data?.rankings]);
   const me = data?.me ?? null;
   const champ = rankings[0] ?? null;
-  const rest = rankings.slice(1);
+  const rest = useMemo(() => rankings.slice(1), [rankings]);
+  const totalStamps = useMemo(
+    () => rankings.reduce((sum, entry) => sum + entry.stamp_count, 0),
+    [rankings],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: RankingEntry }) => <RankRow entry={item} />,
+    [],
+  );
+
+  const header = useMemo(
+    () => (
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <View>
+            <Text style={styles.eyebrow}>탐험 순위</Text>
+            <Text style={styles.screenTitle}>랭킹</Text>
+          </View>
+          <View style={styles.livePill}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>실시간</Text>
+          </View>
+        </View>
+
+        <View style={styles.metrics}>
+          <View style={styles.metric}>
+            <Text style={styles.metricValue}>{rankings.length}</Text>
+            <Text style={styles.metricLabel}>참여자</Text>
+          </View>
+          <View style={styles.metricDivider} />
+          <View style={styles.metric}>
+            <Text style={styles.metricValue}>{comma(totalStamps)}</Text>
+            <Text style={styles.metricLabel}>누적 도장</Text>
+          </View>
+          <View style={styles.metricDivider} />
+          <View style={styles.metric}>
+            <Text style={styles.metricValue}>
+              {champ ? comma(champ.stamp_count) : 0}
+            </Text>
+            <Text style={styles.metricLabel}>최고 기록</Text>
+          </View>
+        </View>
+
+        {champ ? <ChampionSeal entry={champ} /> : null}
+
+        {rest.length > 0 ? (
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionLabel}>탐험가 순위</Text>
+            <View style={styles.sectionLine} />
+          </View>
+        ) : null}
+      </View>
+    ),
+    [champ, rankings.length, rest.length, totalStamps],
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
-      <View style={styles.head}>
-        <Text style={styles.eyebrow}>탐험 기록부</Text>
-        <Text style={styles.screenTitle}>랭킹</Text>
-        <Text style={styles.sub}>전국 관광지 개척 순위</Text>
-      </View>
-
       <FlashList
         data={rest}
         keyExtractor={(item) => String(item.user_id)}
-        renderItem={({ item }) => <RankRow entry={item} />}
-        contentContainerStyle={{
-          paddingTop: spacing.xs,
-          paddingBottom: insets.bottom + 130,
-        }}
-        ListHeaderComponent={
-          champ ? (
-            <View>
-              <ChampionSeal entry={champ} />
-              {rest.length > 0 && (
-                <View style={styles.sectionRow}>
-                  <Text style={styles.sectionLabel}>전체 순위</Text>
-                  <View style={styles.sectionLine} />
-                </View>
-              )}
-            </View>
-          ) : null
+        renderItem={renderItem}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={colors.accent}
+          />
         }
+        contentContainerStyle={{
+          paddingHorizontal: spacing.xl,
+          paddingBottom: insets.bottom + (me || !token ? 126 : spacing.xl),
+        }}
+        ListHeaderComponent={rankings.length > 0 ? header : null}
         ListEmptyComponent={
-          champ ? null : (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>전국 1위 자리가 비어있어요</Text>
-              <Text style={styles.emptyBody}>
-                지금 도장을 찍으면{"\n"}가장 먼저 이름을 올리는 탐험가가 돼요
-              </Text>
-            </View>
-          )
+          <View style={styles.empty}>
+            {isLoading ? (
+              <>
+                <ActivityIndicator color={colors.accent} />
+                <Text style={styles.emptyTitle}>순위를 불러오는 중</Text>
+              </>
+            ) : error ? (
+              <>
+                <Text style={styles.emptyTitle}>랭킹을 불러오지 못했어요</Text>
+                <Pressable onPress={() => refetch()} style={styles.retryButton}>
+                  <Text style={styles.retryButtonText}>다시 시도</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Text style={styles.emptyTitle}>아직 순위가 비어 있어요</Text>
+                <Text style={styles.emptyBody}>
+                  첫 도장을 찍고 탐험 순위에 이름을 올려보세요
+                </Text>
+              </>
+            )}
+          </View>
         }
       />
 
@@ -82,7 +150,10 @@ export default function Ranking() {
           ]}
         >
           <View style={styles.stub}>
-            <Text style={styles.stubLabel}>내 순위</Text>
+            <View style={styles.stubTop}>
+              <Text style={styles.stubLabel}>내 위치</Text>
+              <Text style={styles.stubMeta}>{me.rank}위</Text>
+            </View>
             <MeRow entry={me} />
           </View>
         </View>
@@ -94,7 +165,9 @@ export default function Ranking() {
           ]}
         >
           <View style={styles.stub}>
-            <Text style={styles.stubLabel}>아직 순위에 없어요</Text>
+            <Text style={[styles.stubLabel, styles.loginLabel]}>
+              아직 순위에 없어요
+            </Text>
             <Pressable
               onPress={() => router.push("/login")}
               style={styles.loginCta}
@@ -116,31 +189,82 @@ export default function Ranking() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: spacing.xl,
-    backgroundColor: ledger.paper,
+    backgroundColor: colors.background,
   },
-  head: { paddingBottom: spacing.md },
+  header: {
+    paddingTop: spacing.xs,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    paddingBottom: spacing.md,
+  },
   eyebrow: {
     fontFamily: fontMono,
     fontSize: 10.5,
-    fontWeight: "700",
-    letterSpacing: 2.5,
+    fontWeight: "800",
+    letterSpacing: 1.6,
     textTransform: "uppercase",
-    color: colors.accent,
+    color: colors.muted,
   },
   screenTitle: {
-    fontSize: 28,
-    fontWeight: "800",
+    marginTop: 5,
+    fontSize: 29,
+    fontWeight: "900",
     color: colors.ink,
-    letterSpacing: -0.6,
-    marginTop: 6,
+    letterSpacing: 0,
   },
-  sub: {
-    ...typography.body,
+  livePill: {
+    height: 30,
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.accent,
+  },
+  liveText: {
+    ...typography.chip,
+    color: colors.accentDark,
+  },
+  metrics: {
+    minHeight: 74,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.hairline,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.lg,
+  },
+  metric: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
+  },
+  metricValue: {
+    fontFamily: fontMono,
+    fontSize: 22,
+    fontWeight: "800",
+    color: colors.accent,
+  },
+  metricLabel: {
+    ...typography.chip,
     color: colors.muted,
-    marginTop: spacing.xs,
   },
-
+  metricDivider: {
+    width: 1,
+    height: 34,
+    backgroundColor: colors.hairline,
+  },
   sectionRow: {
     flexDirection: "row",
     alignItems: "baseline",
@@ -150,32 +274,29 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: fontMono,
     fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.5,
+    fontWeight: "800",
+    letterSpacing: 1.2,
     textTransform: "uppercase",
     color: colors.muted,
   },
   sectionLine: {
     flex: 1,
-    borderTopWidth: 1.5,
-    borderStyle: "dashed",
-    borderColor: ledger.ruleStrong,
+    borderTopWidth: 1,
+    borderColor: colors.hairline,
   },
-
-  // 내 순위 — 화면 하단 고정, 나머지 화이트 톤과 어울리게 차분하게
   stubWrap: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
-    backgroundColor: ledger.paper,
+    paddingTop: spacing.lg,
+    backgroundColor: "rgba(255,255,255,0.96)",
   },
   stub: {
     backgroundColor: colors.white,
     borderRadius: radius.card,
-    padding: spacing.lg,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.hairline,
     shadowColor: "#000",
@@ -184,26 +305,34 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 3,
   },
+  stubTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing.sm,
+  },
   stubLabel: {
     fontFamily: fontMono,
     fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.5,
+    fontWeight: "800",
+    letterSpacing: 1.2,
     textTransform: "uppercase",
     color: colors.accent,
-    marginBottom: spacing.sm,
   },
-
+  stubMeta: {
+    ...typography.chip,
+    color: colors.ink,
+  },
   empty: {
+    minHeight: 360,
     alignItems: "center",
-    marginTop: spacing.xl * 2,
+    justifyContent: "center",
     paddingHorizontal: spacing.xl,
+    gap: spacing.md,
   },
   emptyTitle: {
     fontSize: 16,
     fontWeight: "800",
     color: colors.ink,
-    marginBottom: spacing.sm,
   },
   emptyBody: {
     ...typography.body,
@@ -211,8 +340,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
-
-  // 비로그인 하단 로그인 CTA
+  retryButton: {
+    borderRadius: radius.button,
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: 12,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  loginLabel: {
+    marginBottom: spacing.sm,
+  },
   loginCta: {
     flexDirection: "row",
     alignItems: "center",

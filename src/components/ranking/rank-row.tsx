@@ -1,6 +1,7 @@
-import { colors, fontMono } from "@/constants/theme";
+import { colors, fontMono, spacing } from "@/constants/theme";
 import { comma } from "@/lib/format";
 import { RankingEntry } from "@/types/ranking";
+import { memo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { ledger } from "./ledger-theme";
 import RankAvatar from "./rank-avatar";
@@ -12,15 +13,22 @@ const MEDAL: Record<number, string> = {
   3: ledger.bronze,
 };
 
-// 장부 한 줄 — 점선 룰로 구분되는 여권 비자 페이지 느낌
-export default function RankRow({ entry }: { entry: RankingEntry }) {
+// 탐험가 순위 한 줄
+function RankRow({ entry }: { entry: RankingEntry }) {
   const isTop3 = entry.rank <= 3;
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, entry.is_me && styles.myRow]}>
       {isTop3 ? (
         <View style={[styles.badge, { backgroundColor: MEDAL[entry.rank] }]}>
-          <Text style={styles.badgeText}>{entry.rank}</Text>
+          <Text
+            style={[
+              styles.badgeText,
+              entry.rank === 1 && styles.badgeTextDark,
+            ]}
+          >
+            {entry.rank}
+          </Text>
         </View>
       ) : (
         <Text style={styles.rankPlain}>
@@ -29,6 +37,7 @@ export default function RankRow({ entry }: { entry: RankingEntry }) {
       )}
       <RankAvatar entry={entry} />
       <Text style={styles.name} numberOfLines={1}>
+        {entry.is_me ? "나 · " : ""}
         {entry.nickname ?? "익명의 탐험가"}
       </Text>
       <Text style={styles.count}>{comma(entry.stamp_count)}곳</Text>
@@ -36,15 +45,25 @@ export default function RankRow({ entry }: { entry: RankingEntry }) {
   );
 }
 
+export default memo(RankRow);
+
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 13,
+    minHeight: 58,
+    paddingVertical: 9,
+    paddingHorizontal: 2,
     borderBottomWidth: 1,
-    borderStyle: "dashed",
-    borderColor: ledger.rule,
+    borderColor: colors.hairline,
+  },
+  myRow: {
+    backgroundColor: colors.accentSoft,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 10,
+    borderBottomWidth: 0,
+    marginVertical: 3,
   },
   badge: {
     width: 24,
@@ -59,13 +78,16 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.white,
   },
+  badgeTextDark: {
+    color: colors.white,
+  },
   rankPlain: {
-    width: 24,
+    width: 28,
     textAlign: "center",
     fontFamily: fontMono,
     fontSize: 13.5,
-    fontWeight: "700",
-    color: "#b3ad9e",
+    fontWeight: "800",
+    color: colors.muted,
   },
   name: {
     flex: 1,
@@ -73,12 +95,12 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
     fontWeight: "700",
     color: colors.ink,
-    letterSpacing: -0.2,
+    letterSpacing: 0,
   },
   count: {
     fontFamily: fontMono,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "900",
     color: colors.accentDark,
   },
 });
