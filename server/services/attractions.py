@@ -83,6 +83,10 @@ async def _sync_region(session, code: str) -> int:
                 continue  # 좌표 없거나 'null' 등 잘못된 항목 건너뜀
             content_id = item["contentid"]
             fetched_ids.add(content_id)
+            image_url = (item.get("firstimage") or "").replace("http://", "https://") or None
+            if image_url is None:
+                existing = session.get(Attraction, content_id)
+                image_url = existing.image_url if existing else None
             session.merge(
                 Attraction(
                     content_id=content_id,
@@ -91,7 +95,7 @@ async def _sync_region(session, code: str) -> int:
                     latitude=lat,
                     longitude=lng,
                     area_code=code,
-                    image_url=(item.get("firstimage") or "").replace("http://", "https://") or None,
+                    image_url=image_url,
                     lcls_systm1=item.get("lclsSystm1"),
                     lcls_systm2=item.get("lclsSystm2"),
                     lcls_systm3=item.get("lclsSystm3"),

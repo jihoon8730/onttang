@@ -65,6 +65,7 @@ FEATURED_TARGETS_2026 = [
         "priority": "P0",
         "area_code": "11",
         "content_id": "2930901",
+        "image_url": "https://tong.visitkorea.or.kr/cms/resource/94/2930894_image2_1.jpg",
         "aliases": ["성수동카페거리", "성수동 카페거리", "성수동"],
     },
     {
@@ -151,6 +152,7 @@ FEATURED_TARGETS_2026 = [
         "priority": "P1",
         "area_code": "50",
         "content_id": "127813",
+        "image_url": "https://tong.visitkorea.or.kr/cms/resource/83/2513483_image2_1.jpg",
         "aliases": ["섭지코지"],
     },
     {
@@ -207,6 +209,7 @@ FEATURED_TARGETS_2026 = [
         "priority": "P1",
         "area_code": "12",
         "content_id": "1919548",
+        "image_url": "https://tong.visitkorea.or.kr/cms/resource/68/3479268_image2_1.jpg",
         "aliases": ["순천만국가정원", "순천만 국가정원"],
     },
     {

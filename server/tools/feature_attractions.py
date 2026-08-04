@@ -88,6 +88,7 @@ def main() -> None:
     missing: list[MatchResult] = []
     already_featured = 0
     changed = 0
+    image_changed = 0
     skipped_unverified = 0
 
     with SessionLocal() as session:
@@ -108,13 +109,16 @@ def main() -> None:
                     changed += 1
                 else:
                     skipped_unverified += 1
+            if args.apply and target.get("image_url") and not result.attraction.image_url:
+                result.attraction.image_url = target["image_url"]
+                image_changed += 1
 
         if args.apply:
             session.commit()
 
     mode = "APPLY" if args.apply else "DRY-RUN"
     print(f"[{mode}] targets={len(FEATURED_TARGETS_2026)} matched={len(matched)} missing={len(missing)}")
-    print(f"[{mode}] already_featured={already_featured} changed={changed}")
+    print(f"[{mode}] already_featured={already_featured} changed={changed} image_changed={image_changed}")
     if skipped_unverified:
         print(f"[{mode}] skipped_unverified={skipped_unverified}")
 
