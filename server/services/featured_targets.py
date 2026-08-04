@@ -1,0 +1,256 @@
+"""대표 관광지로 승격할 후보 목록.
+
+TourAPI 제목은 공식명, 괄호, 띄어쓰기 차이가 있어 aliases를 함께 둔다.
+area_code는 TourAPI lDongRegnCd 기준 시도 코드다.
+"""
+
+FEATURED_TARGETS_2026 = [
+    # P0: 바로 추가 추천
+    {
+        "name": "경복궁",
+        "priority": "P0",
+        "area_code": "11",
+        "aliases": ["경복궁"],
+    },
+    {
+        "name": "북촌한옥마을",
+        "priority": "P0",
+        "area_code": "11",
+        "aliases": ["북촌한옥마을", "북촌 한옥마을"],
+    },
+    {
+        "name": "창덕궁",
+        "priority": "P0",
+        "area_code": "11",
+        "aliases": ["창덕궁", "창덕궁과 후원"],
+    },
+    {
+        "name": "덕수궁",
+        "priority": "P0",
+        "area_code": "11",
+        "aliases": ["덕수궁"],
+    },
+    {
+        "name": "여의도 한강공원",
+        "priority": "P0",
+        "area_code": "11",
+        "aliases": ["여의도한강공원", "여의도 한강공원"],
+    },
+    {
+        "name": "노들섬",
+        "priority": "P0",
+        "area_code": "11",
+        "aliases": ["노들섬"],
+    },
+    {
+        "name": "남산서울타워",
+        "priority": "P0",
+        "area_code": "11",
+        "aliases": ["남산서울타워", "N서울타워", "엔서울타워", "서울타워"],
+    },
+    {
+        "name": "동대문디자인플라자 DDP",
+        "priority": "P0",
+        "area_code": "11",
+        "aliases": ["동대문디자인플라자", "DDP", "동대문 디자인 플라자"],
+    },
+    {
+        "name": "익선동 한옥거리",
+        "priority": "P0",
+        "area_code": "11",
+        "aliases": ["익선동한옥거리", "익선동 한옥거리", "익선동"],
+    },
+    {
+        "name": "성수동 카페거리",
+        "priority": "P0",
+        "area_code": "11",
+        "content_id": "2930901",
+        "aliases": ["성수동카페거리", "성수동 카페거리", "성수동"],
+    },
+    {
+        "name": "광안리해수욕장",
+        "priority": "P0",
+        "area_code": "26",
+        "aliases": ["광안리해수욕장", "광안리 해수욕장"],
+    },
+    {
+        "name": "해운대해수욕장",
+        "priority": "P0",
+        "area_code": "26",
+        "aliases": ["해운대해수욕장", "해운대 해수욕장"],
+    },
+    {
+        "name": "해운대 블루라인파크",
+        "priority": "P0",
+        "area_code": "26",
+        "aliases": ["해운대블루라인파크", "해운대 블루라인파크", "블루라인파크"],
+    },
+    {
+        "name": "감천문화마을",
+        "priority": "P0",
+        "area_code": "26",
+        "aliases": ["감천문화마을", "감천 문화마을"],
+    },
+    {
+        "name": "용두산공원/부산타워",
+        "priority": "P0",
+        "area_code": "26",
+        "aliases": ["용두산공원", "부산타워", "용두산 공원"],
+    },
+    {
+        "name": "국립경주박물관",
+        "priority": "P0",
+        "area_code": "47",
+        "aliases": ["국립경주박물관"],
+    },
+    {
+        "name": "동궁과 월지",
+        "priority": "P0",
+        "area_code": "47",
+        "aliases": ["동궁과 월지", "경주 동궁과 월지", "안압지"],
+    },
+    {
+        "name": "첨성대",
+        "priority": "P0",
+        "area_code": "47",
+        "aliases": ["첨성대"],
+    },
+    {
+        "name": "대릉원",
+        "priority": "P0",
+        "area_code": "47",
+        "aliases": ["대릉원", "경주 대릉원"],
+    },
+    {
+        "name": "불국사",
+        "priority": "P0",
+        "area_code": "47",
+        "aliases": ["불국사"],
+    },
+    # P1: 지역 확장 추천
+    {
+        "name": "성산일출봉",
+        "priority": "P1",
+        "area_code": "50",
+        "aliases": ["성산일출봉"],
+    },
+    {
+        "name": "사려니숲길",
+        "priority": "P1",
+        "area_code": "50",
+        "aliases": ["사려니숲길", "사려니 숲길"],
+    },
+    {
+        "name": "협재해수욕장",
+        "priority": "P1",
+        "area_code": "50",
+        "aliases": ["협재해수욕장", "협재 해수욕장"],
+    },
+    {
+        "name": "섭지코지",
+        "priority": "P1",
+        "area_code": "50",
+        "content_id": "127813",
+        "aliases": ["섭지코지"],
+    },
+    {
+        "name": "오설록 티뮤지엄",
+        "priority": "P1",
+        "area_code": "50",
+        "aliases": ["오설록 티뮤지엄", "오설록티뮤지엄", "오설록"],
+    },
+    {
+        "name": "경포대/경포호",
+        "priority": "P1",
+        "area_code": "51",
+        "aliases": ["경포대", "경포호"],
+    },
+    {
+        "name": "안목해변",
+        "priority": "P1",
+        "area_code": "51",
+        "content_id": "127722",
+        "aliases": ["안목해변", "안목 해변", "안목커피거리", "안목 카페거리"],
+    },
+    {
+        "name": "설악산 권금성/소공원",
+        "priority": "P1",
+        "area_code": "51",
+        "aliases": ["설악산 소공원", "설악산소공원", "권금성", "설악산 권금성"],
+    },
+    {
+        "name": "남이섬",
+        "priority": "P1",
+        "area_code": "51",
+        "aliases": ["남이섬"],
+    },
+    {
+        "name": "전주한옥마을",
+        "priority": "P1",
+        "area_code": "52",
+        "aliases": ["전주한옥마을", "전주 한옥마을"],
+    },
+    {
+        "name": "오동도",
+        "priority": "P1",
+        "area_code": "12",
+        "aliases": ["오동도"],
+    },
+    {
+        "name": "여수해상케이블카",
+        "priority": "P1",
+        "area_code": "12",
+        "aliases": ["여수해상케이블카", "여수 해상케이블카"],
+    },
+    {
+        "name": "순천만국가정원",
+        "priority": "P1",
+        "area_code": "12",
+        "content_id": "1919548",
+        "aliases": ["순천만국가정원", "순천만 국가정원"],
+    },
+    {
+        "name": "순천만습지",
+        "priority": "P1",
+        "area_code": "12",
+        "aliases": ["순천만습지", "순천만 습지"],
+    },
+    {
+        "name": "죽녹원",
+        "priority": "P1",
+        "area_code": "12",
+        "aliases": ["죽녹원"],
+    },
+    {
+        "name": "보성녹차밭",
+        "priority": "P1",
+        "area_code": "12",
+        "content_id": "127869",
+        "aliases": ["보성녹차밭", "대한다원", "보성 녹차밭"],
+    },
+    {
+        "name": "월미도",
+        "priority": "P1",
+        "area_code": "28",
+        "aliases": ["월미도"],
+    },
+    {
+        "name": "송월동 동화마을",
+        "priority": "P1",
+        "area_code": "28",
+        "aliases": ["송월동 동화마을", "송월동동화마을"],
+    },
+    {
+        "name": "수원화성",
+        "priority": "P1",
+        "area_code": "41",
+        "content_id": "125555",
+        "aliases": ["수원화성", "수원 화성"],
+    },
+    {
+        "name": "헤이리예술마을",
+        "priority": "P1",
+        "area_code": "41",
+        "aliases": ["헤이리예술마을", "헤이리 예술마을"],
+    },
+]
