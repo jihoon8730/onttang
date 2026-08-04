@@ -95,16 +95,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.md,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     backgroundColor: "transparent",
+    minHeight: 76,
   },
   boxSelected: {
-    backgroundColor: "rgba(0,0,0,0.02)", // 아주 미세한 음영만
+    backgroundColor: colors.accentSoft,
   },
   thumbRing: {
-    width: 62,
-    height: 62,
-    borderRadius: 20,
+    width: 58,
+    height: 58,
+    borderRadius: 18,
     borderWidth: 2,
     borderColor: "transparent",
     alignItems: "center",
@@ -114,9 +115,9 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
   },
   image: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 15,
     backgroundColor: colors.chip,
   },
   seal: {

@@ -61,12 +61,13 @@ const FOCUS_ZOOM = 15;
 const FOCUS_DURATION = 1000;
 
 // 바텀시트 스크롤 영역 — 확장 시 상단 시스템바(노치 등) 바로 아래까지 올려 이벤트 버튼도 자연스럽게 덮이도록
-const SHEET_COLLAPSED_RATIO = 0.35;
+const SHEET_COLLAPSED_RATIO = 0.31;
+const SHEET_MID_RATIO = 0.58;
 const SHEET_INITIAL_INDEX = 0; // 접힘으로 시작
 const SHEET_ANIM_DURATION = 500;
 const LIST_BOTTOM_PADDING = 90;
 // mapPadding이 화면을 너무 밀어 올리지 않도록
-const MAP_PADDING_MAX_RATIO = 0.45;
+const MAP_PADDING_MAX_RATIO = 0.52;
 
 export default function Index() {
   // --- 외부 훅 ---
@@ -100,11 +101,19 @@ export default function Index() {
   // 바텀시트 확장 스냅포인트 — 상단 시스템바(노치·상태바) 아래까지만 올라가도록 화면 높이에서 insets.top만큼 뺀 픽셀값 사용
   const sheetExpandedHeight = screenH - insets.top;
   const sheetSnapPoints = useMemo(
-    () => [`${SHEET_COLLAPSED_RATIO * 100}%`, sheetExpandedHeight],
+    () => [
+      `${SHEET_COLLAPSED_RATIO * 100}%`,
+      `${SHEET_MID_RATIO * 100}%`,
+      sheetExpandedHeight,
+    ],
     [sheetExpandedHeight],
   );
   const sheetSnapRatios = useMemo(
-    () => [SHEET_COLLAPSED_RATIO, sheetExpandedHeight / screenH],
+    () => [
+      SHEET_COLLAPSED_RATIO,
+      SHEET_MID_RATIO,
+      sheetExpandedHeight / screenH,
+    ],
     [sheetExpandedHeight, screenH],
   );
 
@@ -370,7 +379,6 @@ export default function Index() {
           style={styles.list}
           data={listData}
           keyExtractor={(item) => item.content_id}
-          estimatedItemSize={110}
           ListHeaderComponent={
             <>
               {showAutoStampBanner && (
@@ -389,7 +397,10 @@ export default function Index() {
                       type="hierarchical"
                     />
                   </View>
-                  <Text style={styles.sheetEyebrow}>주변 탐험지</Text>
+                  <View>
+                    <Text style={styles.sheetEyebrow}>현재 지도 결과</Text>
+                    <Text style={styles.sheetTitle}>주변 탐험지</Text>
+                  </View>
                 </View>
                 <View style={styles.sheetCountRow}>
                   <Text style={styles.sheetCount}>{listData.length}</Text>
@@ -411,6 +422,7 @@ export default function Index() {
         categories={categories}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
+        onMissionPress={() => router.push("/missions")}
         onEventBannerPress={() => {
           if (!token) {
             Alert.alert(
@@ -451,31 +463,33 @@ const styles = StyleSheet.create({
   },
   sheetBackground: {
     backgroundColor: colors.background,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.11,
+    shadowRadius: 22,
+    elevation: 10,
   },
   sheetHandle: {
-    backgroundColor: "#E0DCD6",
-    width: 44,
+    backgroundColor: "#D6D0C6",
+    width: 42,
     height: 5,
     borderRadius: 999,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
   sheetHead: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.hairline,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.background,
   },
   sheetHeaderLeft: {
     flexDirection: "row",
@@ -483,26 +497,36 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   sheetIconWrapper: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: colors.accentSoft,
     alignItems: "center",
     justifyContent: "center",
   },
   sheetEyebrow: {
+    ...typography.chip,
+    fontWeight: "800",
+    color: colors.accent,
+    marginBottom: 2,
+  },
+  sheetTitle: {
     ...typography.body,
-    fontWeight: "700",
     color: colors.ink,
+    fontWeight: "800",
   },
   sheetCountRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    gap: 2,
+    gap: 3,
+    backgroundColor: colors.chip,
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   sheetCount: {
     fontFamily: fontMono,
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "900",
     color: colors.accent,
   },

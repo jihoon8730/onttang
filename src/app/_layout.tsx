@@ -72,6 +72,14 @@ export default function RootLayout() {
               headerBackTitle: "더보기",
             }}
           />
+          <Stack.Screen
+            name="missions"
+            options={{
+              headerShown: true,
+              title: "주변 미션",
+              headerBackTitle: "탐험",
+            }}
+          />
           <Stack.Screen name="login" options={{ presentation: "modal" }} />
         </Stack>
       </QueryClientProvider>

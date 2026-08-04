@@ -8,6 +8,7 @@ type Props = {
   categories: string[];
   selectedCategory: string | null;
   setSelectedCategory: (c: string | null) => void;
+  onMissionPress?: () => void;
   onEventBannerPress?: () => void;
 };
 
@@ -16,6 +17,7 @@ export default function MapSearchOverlay({
   categories,
   selectedCategory,
   setSelectedCategory,
+  onMissionPress,
   onEventBannerPress,
 }: Props) {
   const insets = useSafeAreaInsets();
@@ -69,17 +71,31 @@ export default function MapSearchOverlay({
         })}
       </ScrollView>
 
-      <Pressable style={styles.eventButton} onPress={onEventBannerPress}>
-        <LottieView
-          source={require("../../assets/lottie/gift.json")}
-          autoPlay
-          loop
-          style={styles.eventLottie}
-        />
-        <View style={styles.eventContent}>
-          <Text style={styles.eventButtonText}>이벤트</Text>
-        </View>
-      </Pressable>
+      <View style={styles.actionRow}>
+        <Pressable style={styles.missionButton} onPress={onMissionPress}>
+          <LottieView
+            source={require("../../assets/lottie/mission.json")}
+            autoPlay
+            loop
+            style={styles.missionLottie}
+          />
+          <View style={styles.missionContent}>
+            <Text style={styles.missionButtonText}>미션</Text>
+          </View>
+        </Pressable>
+
+        <Pressable style={styles.eventButton} onPress={onEventBannerPress}>
+          <LottieView
+            source={require("../../assets/lottie/gift.json")}
+            autoPlay
+            loop
+            style={styles.eventLottie}
+          />
+          <View style={styles.eventContent}>
+            <Text style={styles.eventButtonText}>이벤트</Text>
+          </View>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -94,7 +110,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   eventButton: {
-    alignSelf: "flex-start",
     width: 52,
     height: 52,
     borderRadius: 26,
@@ -103,6 +118,42 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
     ...cardShadow,
+  },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    alignSelf: "flex-start",
+  },
+  missionButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    ...cardShadow,
+  },
+  missionLottie: {
+    position: "absolute",
+    width: 32,
+    height: 32,
+    top: 4,
+    zIndex: 0,
+  },
+  missionContent: {
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: "100%",
+    paddingBottom: 6,
+    zIndex: 1,
+  },
+  missionButtonText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: colors.accentDark,
+    letterSpacing: 0.2,
   },
   eventLottie: {
     position: "absolute",
